@@ -237,7 +237,7 @@
      Drawn as a stack of horizontal slices, each slid sideways by its
      own travelling wave. That is what makes it look like it is seen
      through moving water rather than simply scaled. */
-  const SLICES = 54;
+  const SLICES = 130;
 
   function drawKeeper(t, zoom) {
     if (!kc || !art) return;
@@ -254,22 +254,25 @@
     }
 
     // the warp eases off as you are pulled in
-    const amp  = (w * 0.015) * (1 - zoom);
-    const roll = (w * 0.006) * (1 - zoom);
+    const amp  = (w * 0.009) * (1 - zoom);
+    const roll = (w * 0.003) * (1 - zoom);
 
     /* Each slice is drawn a little wider than the frame. Without that
        overscan, a slice sliding sideways leaves a bare strip at the
        edge of the picture. */
     const over = amp * 2.2 + roll * 2.2 + 2;
 
+    /* Slices only ever move sideways. Shifting them vertically tears
+       gaps between them, which is what read as glitching. The waves are
+       kept low-frequency for the same reason: neighbouring slices have
+       to stay close or the edge between them becomes visible. */
     for (let i = 0; i < SLICES; i++) {
       const sy = i * sh;
       const f  = i / SLICES;
-      const dx = Math.sin(f * 7.2 + t * 1.15) * amp
-               + Math.sin(f * 17.5 - t * 0.63) * roll;
-      const dy = Math.sin(f * 4.1 + t * 0.8) * roll * 0.8;
-      kc.drawImage(art, 0, sy, w, sh + 1,
-                   dx - over, sy + dy, w + over * 2, sh + 1);
+      const dx = Math.sin(f * 3.1 + t * 0.9) * amp
+               + Math.sin(f * 5.4 - t * 0.52) * roll;
+      kc.drawImage(art, 0, sy, w, sh + 1.5,
+                   dx - over, sy, w + over * 2, sh + 1.5);
     }
 
     kc.setTransform(1, 0, 0, 1, 0, 0);

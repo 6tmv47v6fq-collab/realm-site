@@ -24,8 +24,8 @@
 /* the one way in */
 .enter{
   position:relative;cursor:pointer;border:0;background:none;padding:0;
-  width:min(56vw,224px);aspect-ratio:1/.56;
-  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  width:min(84vw,340px);aspect-ratio:auto;min-height:78px;padding:20px 0;
+  clip-path:polygon(7% 0%,93% 0%,100% 50%,93% 100%,7% 100%,0% 50%);
   transition:transform .3s;
 }
 .enter::before{
@@ -35,11 +35,11 @@
   animation:turnGate 9s linear infinite;
 }
 .enter::after{
-  content:'';position:absolute;inset:3px;
+  content:'';position:absolute;inset:0;transform:scale(.978);
   background:
-    radial-gradient(circle at 50% 46%,rgba(109,40,217,.62),rgba(20,6,46,.95) 70%),
+    radial-gradient(ellipse at 50% 50%,rgba(109,40,217,.62),rgba(18,5,44,.96) 72%),
     #0a0320;
-  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  clip-path:polygon(7% 0%,93% 0%,100% 50%,93% 100%,7% 100%,0% 50%);
 }
 @keyframes turnGate{to{transform:rotate(360deg)}}
 .enter-in{
@@ -64,8 +64,14 @@
   filter:drop-shadow(0 0 46px rgba(139,92,246,.5));
   animation:keeperBreathe 13s ease-in-out infinite;
   /* the art is on black — feather it so it never reads as a pasted box */
-  -webkit-mask-image:radial-gradient(ellipse 88% 86% at 50% 48%,#000 72%,transparent 99%);
-          mask-image:radial-gradient(ellipse 88% 86% at 50% 48%,#000 72%,transparent 99%);
+  -webkit-mask-image:
+    radial-gradient(ellipse 92% 90% at 50% 48%,#000 68%,transparent 100%),
+    linear-gradient(to bottom,transparent 0,#000 7%,#000 93%,transparent 100%);
+  -webkit-mask-composite:source-in;
+          mask-image:
+    radial-gradient(ellipse 92% 90% at 50% 48%,#000 68%,transparent 100%),
+    linear-gradient(to bottom,transparent 0,#000 7%,#000 93%,transparent 100%);
+          mask-composite:intersect;
 }
 #keeper.ready{opacity:1}
 @keyframes keeperBreathe{
@@ -300,21 +306,18 @@
 
 .ch{
   display:inline-block;
-  animation:letterRide 3.6s ease-in-out infinite,
-            letterHue  7.2s linear infinite;
-  animation-delay:calc(var(--i) * -0.11s), calc(var(--i) * -0.16s);
+  animation:letterRide 4.4s ease-in-out infinite,
+            letterHue  8s ease-in-out infinite;
+  animation-delay:calc(var(--i) * -0.085s), calc(var(--i) * -0.12s);
   will-change:transform;
 }
 @keyframes letterRide{
-  0%,100%{transform:translateY(0)      rotate(0deg)   scaleY(1)}
-  25%    {transform:translateY(-0.16em) rotate(-3.5deg) scaleY(1.1)}
-  50%    {transform:translateY(0.05em)  rotate(0deg)   scaleY(.94)}
-  75%    {transform:translateY(0.14em)  rotate(3.5deg)  scaleY(1.06)}
+  0%,100%{transform:translateY(0)}
+  50%    {transform:translateY(-0.13em)}
 }
 @keyframes letterHue{
-  0%,100%{color:#f7e9c8; text-shadow:-1.5px 0 #22d3ee,1.5px 0 #a855f7,0 0 20px #e3ba5c}
-  33%    {color:#d7c6ff; text-shadow: 1.5px 0 #e3ba5c,-1.5px 0 #22d3ee,0 0 24px #a855f7}
-  66%    {color:#bff3ff; text-shadow:-1px 1px #a855f7,1px -1px #e3ba5c,0 0 22px #22d3ee}
+  0%,100%{color:#fbf1d6; text-shadow:0 0 14px #e3ba5c,0 0 28px rgba(168,85,247,.7)}
+  50%    {color:#d8ccff; text-shadow:0 0 14px #a855f7,0 0 30px rgba(34,211,238,.6)}
 }
 
 /* the line under the door is quieter */
