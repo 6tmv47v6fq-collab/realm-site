@@ -76,6 +76,11 @@
   let W = 0, H = 0, DPR = 1;
   let t0 = 0, running = true;
 
+  /* The background is soft gradients, so it can be drawn at half size
+     and scaled up — invisible to the eye, a quarter of the pixels. */
+  const bg    = document.createElement("canvas");
+  const bgCtx = bg.getContext("2d");
+
   /* ---------- sizing ---------- */
   function resize() {
     DPR = Math.min(window.devicePixelRatio || 1, 2);
@@ -84,46 +89,92 @@
     canvas.width  = Math.floor(W * DPR);
     canvas.height = Math.floor(H * DPR);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    bg.width  = Math.max(1, Math.floor(W / 2));
+    bg.height = Math.max(1, Math.floor(H / 2));
   }
   window.addEventListener("resize", resize);
 
-  /* ---------- background ---------- */
-  function drawSky(time) {
+  /* ---------- background ----------
+     A turning kaleidoscope of saturated colour. The realm should never
+     look like an empty black page. */
+  function paintSky(ctx, time) {
     const hue = SECTORS[sector].hue;
+    const t   = time * 0.001;
 
     ctx.fillStyle = "#04020a";
     ctx.fillRect(0, 0, W, H);
 
-    const g = ctx.createRadialGradient(W/2, H*0.45, 0, W/2, H*0.45, Math.max(W, H) * 0.75);
-    g.addColorStop(0,   `hsla(${hue},70%,45%,0.30)`);
-    g.addColorStop(0.45,`hsla(${hue + 40},65%,35%,0.13)`);
-    g.addColorStop(1,   "rgba(4,2,10,0)");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
+    const cx = W / 2, cy = H * 0.46;
+    const R  = Math.max(W, H);
 
-    // slow sacred geometry, turning behind everything
-    const cx = W/2, cy = H*0.45, r = Math.min(W, H) * 0.42;
+    /* Two slow colour fields, kept deliberately faint. The black has to
+       stay black — that is what makes the beings look lit rather than
+       painted. Two fills instead of four also buys back the frame rate. */
+    ctx.globalCompositeOperation = "lighter";
+    for (let k = 0; k < 2; k++) {
+      const a  = t * (0.06 + k * 0.04) + k * 2.4;
+      const px = cx + Math.cos(a) * W * 0.36;
+      const py = cy + Math.sin(a * 0.83) * H * 0.24;
+      const g  = ctx.createRadialGradient(px, py, 0, px, py, R * 0.5);
+      const h  = hue + k * 120 + Math.sin(t * 0.2 + k) * 50;
+      g.addColorStop(0,   `hsla(${h},100%,55%,0.11)`);
+      g.addColorStop(0.45,`hsla(${h + 50},100%,50%,0.05)`);
+      g.addColorStop(1,   "hsla(0,0%,0%,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // kaleidoscope: mirrored spokes of moving colour
+    const SYM = 12;
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.rotate(time * 0.00002);
-    ctx.strokeStyle = `hsla(${hue},80%,70%,0.10)`;
-    ctx.lineWidth = 1;
-    for (let k = 0; k < 3; k++) {
+    for (let i = 0; i < SYM; i++) {
+      ctx.rotate((Math.PI * 2) / SYM);
+      ctx.beginPath();
+      for (let k = 0; k < 7; k++) {
+        const rr = R * (0.08 + k * 0.085) + Math.sin(t * 0.55 + k * 1.3) * 26;
+        const sp = 0.13 + Math.sin(t * 0.33 + k) * 0.07;
+        ctx.moveTo(Math.cos(-sp) * rr, Math.sin(-sp) * rr);
+        ctx.lineTo(Math.cos(sp) * rr, Math.sin(sp) * rr);
+      }
+      ctx.strokeStyle = `hsla(${hue + i * 30 + t * 22},100%,65%,0.3)`;
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // concentric sacred geometry, breathing
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(t * 0.05);
+    for (let k = 0; k < 5; k++) {
+      const rr = Math.min(W, H) * (0.16 + k * 0.1) + Math.sin(t * 0.6 + k) * 9;
       ctx.beginPath();
       for (let i = 0; i <= 6; i++) {
-        const a = (i / 6) * Math.PI * 2;
-        const rr = r * (1 - k * 0.22);
+        const a = (i / 6) * Math.PI * 2 + k * 0.26;
         i ? ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr)
           : ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
       }
+      ctx.strokeStyle = `hsla(${hue + 120 + k * 42 + t * 16},100%,70%,0.34)`;
+      ctx.lineWidth = 1.2;
       ctx.stroke();
     }
-    ctx.rotate(-time * 0.00005);
-    ctx.strokeStyle = `hsla(${hue + 60},80%,70%,0.08)`;
-    ctx.beginPath();
-    ctx.arc(0, 0, r * 0.62, 0, Math.PI * 2);
-    ctx.stroke();
     ctx.restore();
+    ctx.globalCompositeOperation = "source-over";
+
+    // pull the edges back down to black
+    const vig = ctx.createRadialGradient(cx, cy, Math.min(W, H) * 0.24, cx, cy, R * 0.78);
+    vig.addColorStop(0, "rgba(4,2,10,0)");
+    vig.addColorStop(1, "rgba(4,2,10,0.92)");
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  function drawSky(time) {
+    bgCtx.setTransform(0.5, 0, 0, 0.5, 0, 0);
+    paintSky(bgCtx, time);
+    ctx.drawImage(bg, 0, 0, W, H);
   }
 
   /* ---------- movement ---------- */

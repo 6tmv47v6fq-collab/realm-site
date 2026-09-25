@@ -168,8 +168,8 @@
       }
     }
 
-    g.add(lines(pts, c1, 0.22));
-    g.add(lines(cap, c2, 0.15));
+    g.add(lines(pts, c1, 0.5));
+    g.add(lines(cap, c2, 0.36));
     return g;
   }
 
@@ -299,7 +299,7 @@
           const a = Math.random() * Math.PI * 2, r = 5 + Math.random() * (sh.r - 8);
           const x = Math.cos(a) * r, z = Math.sin(a) * r;
           g.add(lines([V(x, 0, z), V(x, sh.h - 1, z)],
-                      Math.random() < 0.5 ? c1 : c2, 0.22));
+                      Math.random() < 0.5 ? c1 : c2, 0.5));
         }
         break;
 
@@ -371,6 +371,7 @@
   }
 
   let sprites = [];
+  let envMats = [];
 
   /* ---------- entering a sector ---------- */
   function enter(i) {
@@ -398,13 +399,24 @@
     env.add(buildShell(shape, c1, c2));
     env.add(furnish(i, shape, c1, c2));
 
+    /* Every surface gets its own place on the colour wheel and then the
+       whole chamber cycles. This is what stops it looking like a grey
+       wireframe and starts it looking like the realm. */
+    envMats = [];
+    let seen = 0;
+    env.traverse(o => {
+      if (!o.material) return;
+      envMats.push({ m: o.material, off: (seen * 47) % 360, lift: 0.55 + (seen % 3) * 0.08 });
+      seen++;
+    });
+
     const made = makeBeings(i, shape);
     swarm   = made.group;
     sprites = made.list;
     scene.add(env, swarm);
 
-    scene.fog = new THREE.FogExp2(hsl(hue, 0.7, 0.05).getHex(), 0.0085);
-    renderer.setClearColor(hsl(hue, 0.65, 0.03).getHex(), 1);
+    scene.fog = new THREE.FogExp2(hsl(hue, 0.95, 0.07).getHex(), 0.0062);
+    renderer.setClearColor(hsl(hue, 0.9, 0.035).getHex(), 1);
 
     // stand just inside the near end, looking in
     if (shape.kind === "tube") pos.set(0, shape.r, shape.d / 2 - 12);
@@ -536,6 +548,12 @@
       if (confine(pos, shape, 3)) hitWall(t);
     }
     camera.position.copy(pos);
+
+    const baseHue = SECTORS[sector].hue;
+    for (const em of envMats) {
+      em.m.color.setHSL(
+        ((((baseHue + em.off + t * 14) % 360) + 360) % 360) / 360, 1, em.lift);
+    }
 
     for (const sp of sprites) {
       const b = sp.userData.bob;

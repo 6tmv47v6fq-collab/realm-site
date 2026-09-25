@@ -33,9 +33,14 @@ body{
   -webkit-font-smoothing:antialiased;
 }
 
+#sky{
+  position:fixed;inset:0;z-index:-2;width:100%;height:100%;
+  display:block;pointer-events:none;
+}
+
 /* ambient light */
 .aura{
-  position:fixed; inset:0; z-index:-1; pointer-events:none;
+  position:fixed; inset:0; z-index:-1; pointer-events:none; mix-blend-mode:screen;
   background:
     radial-gradient(60% 40% at 50% 0%, rgba(168,85,247,.22), transparent 70%),
     radial-gradient(50% 35% at 10% 40%, rgba(34,211,238,.12), transparent 70%),
@@ -238,3 +243,93 @@ footer{text-align:center;padding:46px 18px 60px;border-top:1px solid var(--line)
   border-bottom:1px solid rgba(34,211,238,.35);padding-bottom:2px;
 }
 .enter-line a:hover{color:var(--text);border-color:var(--text)}
+
+/* ============================================================
+   VIBRANCY — the realm is not a tasteful place
+   ============================================================ */
+
+/* a living spectrum behind everything */
+.aura{
+  background:
+    radial-gradient(58% 38% at 50% 0%,   rgba(168,85,247,.5),  transparent 68%),
+    radial-gradient(48% 34% at 8%  32%,  rgba(34,211,238,.34), transparent 68%),
+    radial-gradient(54% 38% at 94% 60%,  rgba(232,121,249,.34),transparent 68%),
+    radial-gradient(46% 32% at 22% 88%,  rgba(52,211,153,.26), transparent 68%),
+    radial-gradient(44% 30% at 78% 14%,  rgba(251,191,36,.22), transparent 68%);
+  animation:breathe 22s ease-in-out infinite alternate;
+}
+@keyframes breathe{
+  0%  {filter:hue-rotate(0deg)   saturate(1.05); transform:scale(1)}
+  100%{filter:hue-rotate(58deg)  saturate(1.45); transform:scale(1.14)}
+}
+
+/* headings run through the spectrum */
+.section h2{
+  background:linear-gradient(90deg,var(--cyan),var(--violet),var(--magenta),var(--gold),var(--cyan));
+  background-size:300% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:slide 9s linear infinite;
+}
+@keyframes slide{to{background-position:300% 0}}
+
+.hero h1{
+  background:linear-gradient(96deg,#fff,var(--cyan),var(--magenta),var(--gold),#fff);
+  background-size:280% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:slide 7s linear infinite;
+  text-shadow:none;
+  filter:drop-shadow(0 0 22px rgba(168,85,247,.85)) drop-shadow(0 0 54px rgba(34,211,238,.5));
+}
+
+.portal{opacity:.85;animation:spectrum 16s linear infinite}
+@keyframes spectrum{to{filter:hue-rotate(360deg)}}
+
+.mark{background-size:300% 100%;animation:slide 8s linear infinite}
+
+/* cards and panels stop being grey boxes */
+.card,.mint-card,.sector-panel,.chapter,details{
+  background:
+    linear-gradient(150deg,rgba(168,85,247,.16),rgba(34,211,238,.09) 45%,rgba(232,121,249,.13)),
+    rgba(10,5,22,.72);
+  border-color:rgba(168,85,247,.42);
+}
+.card:hover,.chapter:hover{border-color:var(--cyan)}
+.card h3{
+  background:linear-gradient(90deg,var(--cyan),var(--magenta));
+  background-size:200% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+
+/* the tier rows glow in their own colour */
+.tier{
+  border-left-width:4px;
+  background:linear-gradient(90deg,
+    color-mix(in srgb,var(--c) 34%,transparent),
+    color-mix(in srgb,var(--c) 8%,transparent) 55%,
+    transparent 85%);
+  box-shadow:inset 0 0 26px color-mix(in srgb,var(--c) 16%,transparent);
+}
+.tier .name{color:#fff;text-shadow:0 0 12px var(--c)}
+.tier .dot{box-shadow:0 0 18px var(--c),0 0 34px var(--c)}
+
+/* buttons burn */
+.btn.primary{
+  background:linear-gradient(100deg,var(--cyan),var(--violet) 40%,var(--magenta) 70%,var(--gold));
+  background-size:260% 100%;
+  animation:slide 6s linear infinite;
+  box-shadow:0 0 30px rgba(168,85,247,.6),0 0 60px rgba(34,211,238,.3);
+}
+
+.round-flag{
+  background:linear-gradient(90deg,var(--gold),var(--magenta),var(--cyan),var(--gold));
+  background-size:300% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:slide 8s linear infinite;text-shadow:none;
+}
+
+.timeline li.now::before{box-shadow:0 0 14px var(--gold),0 0 28px var(--gold)}
+.enter-line a{color:var(--gold);border-color:rgba(251,191,36,.5)}
+
+@media (prefers-reduced-motion:reduce){
+  .aura,.hero h1,.section h2,.mark,.portal,.btn.primary,.round-flag{animation:none}
+}

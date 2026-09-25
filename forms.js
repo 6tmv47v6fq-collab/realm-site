@@ -38,6 +38,22 @@ window.RealmForms = (() => {
       SPRITE[t.key] = c;
     });
   };
+  /* full-spectrum colour — the realm is not a two-tone place */
+  const hsla = (h, s, l, a) => `hsla(${((h % 360) + 360) % 360},${s}%,${l}%,${a})`;
+
+  /* each tier has a dominant hue, but the bands range right around the
+     wheel — the rarer the being, the wider its spectrum */
+  const TIER_HUE = {
+    common:    { base: 190, spread: 110 },
+    uncommon:  { base: 140, spread: 130 },
+    rare:      { base: 215, spread: 140 },
+    epic:      { base: 285, spread: 150 },
+    legendary: { base: 40,  spread: 165 },
+    mythic:    { base: 355, spread: 180 },
+    entity:    { base: 185, spread: 230 },
+    god:       { base: 45,  spread: 360 }
+  };
+
   const hexA = (hex, a) => {
     const n = parseInt(hex.slice(1), 16);
     return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`;
@@ -58,14 +74,14 @@ window.RealmForms = (() => {
 /* How elaborate each tier's form is: px = baked sprite size,
      rings = concentric bands of pattern, sym = fold symmetry. */
   const FORM = {
-    common:    { px: 36,  rings: 2, sym: 6,  spin: 0.00004 },
-    uncommon:  { px: 44,  rings: 3, sym: 6,  spin: 0.00005 },
-    rare:      { px: 56,  rings: 3, sym: 8,  spin: 0.00005 },
-    epic:      { px: 70,  rings: 4, sym: 8,  spin: 0.00006 },
-    legendary: { px: 88, rings: 5, sym: 12, spin: 0.00006 },
-    mythic:    { px: 106, rings: 5, sym: 12, spin: 0.00007 },
-    entity:    { px: 126, rings: 6, sym: 16, spin: 0.00007 },
-    god:       { px: 152, rings: 7, sym: 18, spin: 0.00008 }
+    common:    { px: 44,  rings: 3, sym: 6,  spin: 0.00004 },
+    uncommon:  { px: 54,  rings: 4, sym: 8,  spin: 0.00005 },
+    rare:      { px: 68,  rings: 5, sym: 10, spin: 0.00005 },
+    epic:      { px: 84,  rings: 6, sym: 12, spin: 0.00006 },
+    legendary: { px: 104, rings: 7, sym: 14, spin: 0.00006 },
+    mythic:    { px: 124, rings: 8, sym: 16, spin: 0.00007 },
+    entity:    { px: 146, rings: 9, sym: 20, spin: 0.00007 },
+    god:       { px: 176, rings: 11, sym: 24, spin: 0.00008 }
   };
 
 /* ---------- procedural beings ----------
@@ -76,6 +92,7 @@ window.RealmForms = (() => {
     const cfg  = FORM[being.tier];
     const tier = TIERS.find(t => t.key === being.tier);
     const rnd  = seeded(being.id * 2654435761);
+    const HUE  = TIER_HUE[being.tier];
 
     const S = cfg.px, c = S / 2;
     const cv = document.createElement("canvas");
@@ -90,13 +107,21 @@ window.RealmForms = (() => {
     for (let band = 0; band < cfg.rings; band++) {
       const rr    = R * (0.24 + 0.76 * ((band + 1) / cfg.rings));
       const sym   = cfg.sym + (band % 2 ? 0 : 2);
-      const color = rnd() < 0.55 ? tier.color : tier.accent;
+      const hue   = HUE.base + (rnd() - 0.5) * HUE.spread + band * 17;
       const motif = Math.floor(rnd() * 5);
-      const w     = 0.7 + rnd() * 0.9;
+      const w     = 0.8 + rnd() * 1.1;
 
-      // faint wide pass underneath = glow, tight bright pass on top
-      for (const [lw, al] of [[w * 3.2, 0.13], [w, 0.92]]) {
-        neon(color, lw, al);
+      /* three passes: a wide bloom in a neighbouring hue, a mid pass,
+         then a tight near-white core line. That chromatic fringe is
+         what makes neon look lit rather than drawn. */
+      const passes = [
+        [w * 4.2, 0.16, hsla(hue + 40, 100, 58, 1)],
+        [w * 1.9, 0.5,  hsla(hue,      100, 60, 1)],
+        [w * 0.8, 0.98, hsla(hue,      100, 82, 1)]
+      ];
+      for (const [lw, al, col] of passes) {
+        g.strokeStyle = col.replace(/,1\)$/, `,${al})`);
+        g.lineWidth = lw;
         g.beginPath();
 
         if (motif === 0) {                                  // ring of nodes
@@ -139,20 +164,23 @@ window.RealmForms = (() => {
       }
 
       // the concentric band itself
-      neon(band % 2 ? tier.accent : tier.color, 0.6, 0.3);
+      g.strokeStyle = hsla(hue + 180, 100, 65, 0.42);
+      g.lineWidth = 0.7;
       g.beginPath(); g.arc(0, 0, rr, 0, Math.PI * 2); g.stroke();
     }
 
     // burning core
-    const core = g.createRadialGradient(0, 0, 0, 0, 0, R * 0.3);
-    core.addColorStop(0, "rgba(255,255,255,.98)");
-    core.addColorStop(0.4, hexA(tier.accent, 0.8));
-    core.addColorStop(1, hexA(tier.color, 0));
+    const core = g.createRadialGradient(0, 0, 0, 0, 0, R * 0.38);
+    core.addColorStop(0,    "rgba(255,255,255,1)");
+    core.addColorStop(0.22, hsla(HUE.base + 60, 100, 78, 0.95));
+    core.addColorStop(0.5,  hsla(HUE.base,      100, 62, 0.6));
+    core.addColorStop(0.78, hsla(HUE.base - 70, 100, 55, 0.26));
+    core.addColorStop(1,    hsla(HUE.base,      100, 50, 0));
     g.fillStyle = core;
-    g.beginPath(); g.arc(0, 0, R * 0.3, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(0, 0, R * 0.38, 0, Math.PI * 2); g.fill();
 
     return cv;
   }
 
-  return { seeded, hexA, TIER_STYLE, FORM, makeForm, buildSprites, SPRITE };
+  return { seeded, hexA, hsla, TIER_HUE, TIER_STYLE, FORM, makeForm, buildSprites, SPRITE };
 })();
