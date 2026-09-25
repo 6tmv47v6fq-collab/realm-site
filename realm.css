@@ -76,13 +76,18 @@ body.picking .lore-btn{opacity:0;pointer-events:none;transition:opacity .2s}
 .being-card .note{margin:14px 0 0;font-size:.82rem;color:var(--dim);line-height:1.6}
 
 .unrevealed{
-  width:130px;height:130px;margin:0 auto;border-radius:50%;
+  width:150px;height:150px;overflow:visible;margin:0 auto;border-radius:50%;
   display:grid;place-items:center;position:relative;
   background:radial-gradient(circle,color-mix(in srgb,var(--c) 34%,transparent),transparent 70%);
   border:1px solid color-mix(in srgb,var(--c) 45%,transparent);
 }
+.unrevealed img{
+  position:absolute;width:118%;height:118%;object-fit:contain;
+  opacity:.9;animation:turn 44s linear infinite;
+}
 .unrevealed span{
-  font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.26em;color:var(--c);
+  position:relative;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.26em;
+  color:#fff;text-shadow:0 0 10px var(--void),0 0 22px var(--void);
 }
 .unrevealed::before{
   content:'';position:absolute;inset:-9px;border-radius:50%;

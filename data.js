@@ -32,14 +32,14 @@ const SUPPLY_PER_ROUND = 111;
 
 /* Rarity breakdown per round — must add up to 111. */
 const TIERS = [
-  { name: "Common",    count: 40, key: "common",    color: "#9ca3af" },
-  { name: "Uncommon",  count: 28, key: "uncommon",  color: "#34d399" },
-  { name: "Rare",      count: 18, key: "rare",      color: "#3b82f6" },
-  { name: "Epic",      count: 11, key: "epic",      color: "#a855f7" },
-  { name: "Legendary", count: 7,  key: "legendary", color: "#f59e0b" },
-  { name: "Mythic",    count: 4,  key: "mythic",    color: "#ef4444" },
-  { name: "Entity",    count: 2,  key: "entity",    color: "#a5f3fc" },
-  { name: "God",       count: 1,  key: "god",       color: "#fde68a" }
+  { name: "Common",    count: 40, key: "common",    color: "#9ca3af" , accent: "#e5e7eb" },
+  { name: "Uncommon",  count: 28, key: "uncommon",  color: "#34d399" , accent: "#a7f3d0" },
+  { name: "Rare",      count: 18, key: "rare",      color: "#3b82f6" , accent: "#67e8f9" },
+  { name: "Epic",      count: 11, key: "epic",      color: "#a855f7" , accent: "#f0abfc" },
+  { name: "Legendary", count: 7,  key: "legendary", color: "#f59e0b" , accent: "#fde68a" },
+  { name: "Mythic",    count: 4,  key: "mythic",    color: "#ef4444" , accent: "#fb923c" },
+  { name: "Entity",    count: 2,  key: "entity",    color: "#a5f3fc" , accent: "#c4b5fd" },
+  { name: "God",       count: 1,  key: "god",       color: "#fde68a" , accent: "#ffffff" }
 ];
 
 /* The ten sectors, in the order they open.

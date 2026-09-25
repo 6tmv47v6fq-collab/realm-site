@@ -28,15 +28,121 @@
 
   /* ---------- per-tier look and behaviour ---------- */
   const TIER_STYLE = {
-    common:    { size: 3.2,  glow: 16, speed: 0.30, ring: 0 },
-    uncommon:  { size: 3.8,  glow: 20, speed: 0.27, ring: 0 },
-    rare:      { size: 4.6,  glow: 26, speed: 0.23, ring: 0 },
-    epic:      { size: 5.6,  glow: 34, speed: 0.19, ring: 0 },
-    legendary: { size: 7.0,  glow: 46, speed: 0.15, ring: 3 },
-    mythic:    { size: 8.6,  glow: 60, speed: 0.12, ring: 4 },
-    entity:    { size: 10.5, glow: 78, speed: 0.09, ring: 6 },
-    god:       { size: 14.0, glow: 110, speed: 0.06, ring: 8 }
+    common:    { size: 2.2,  glow: 11, speed: 0.30, turn: false },
+    uncommon:  { size: 2.7,  glow: 14, speed: 0.27, turn: false },
+    rare:      { size: 3.4,  glow: 18, speed: 0.23, turn: false },
+    epic:      { size: 4.4,  glow: 24, speed: 0.19, turn: true  },
+    legendary: { size: 5.8,  glow: 33, speed: 0.15, turn: true  },
+    mythic:    { size: 7.4,  glow: 44, speed: 0.12, turn: true  },
+    entity:    { size: 9.2,  glow: 58, speed: 0.09, turn: true  },
+    god:       { size: 12.5, glow: 84, speed: 0.06, turn: true  }
   };
+
+  /* How elaborate each tier's form is: px = baked sprite size,
+     rings = concentric bands of pattern, sym = fold symmetry. */
+  const FORM = {
+    common:    { px: 36,  rings: 2, sym: 6,  spin: 0.00004 },
+    uncommon:  { px: 44,  rings: 3, sym: 6,  spin: 0.00005 },
+    rare:      { px: 56,  rings: 3, sym: 8,  spin: 0.00005 },
+    epic:      { px: 70,  rings: 4, sym: 8,  spin: 0.00006 },
+    legendary: { px: 88, rings: 5, sym: 12, spin: 0.00006 },
+    mythic:    { px: 106, rings: 5, sym: 12, spin: 0.00007 },
+    entity:    { px: 126, rings: 6, sym: 16, spin: 0.00007 },
+    god:       { px: 152, rings: 7, sym: 18, spin: 0.00008 }
+  };
+
+  /* ---------- procedural beings ----------
+     Every being is baked once into its own little image: concentric
+     bands of neon geometry with fold symmetry, like a mandala grown out
+     of circuitry. Baking means the detail costs nothing per frame. */
+  function makeForm(being) {
+    const cfg  = FORM[being.tier];
+    const tier = TIERS.find(t => t.key === being.tier);
+    const rnd  = seeded(being.id * 2654435761);
+
+    const S = cfg.px, c = S / 2;
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = S;
+    const g = cv.getContext("2d");
+    g.translate(c, c);
+    g.lineCap = "round";
+
+    const neon = (color, w, a) => { g.strokeStyle = hexA(color, a); g.lineWidth = w; };
+    const R = c * 0.94;
+
+    for (let band = 0; band < cfg.rings; band++) {
+      const rr    = R * (0.24 + 0.76 * ((band + 1) / cfg.rings));
+      const sym   = cfg.sym + (band % 2 ? 0 : 2);
+      const color = rnd() < 0.55 ? tier.color : tier.accent;
+      const motif = Math.floor(rnd() * 5);
+      const w     = 0.7 + rnd() * 0.9;
+
+      // faint wide pass underneath = glow, tight bright pass on top
+      for (const [lw, al] of [[w * 3.2, 0.13], [w, 0.92]]) {
+        neon(color, lw, al);
+        g.beginPath();
+
+        if (motif === 0) {                                  // ring of nodes
+          for (let i = 0; i < sym; i++) {
+            const a = (i / sym) * Math.PI * 2;
+            const x = Math.cos(a) * rr, y = Math.sin(a) * rr;
+            g.moveTo(x + rr * 0.09, y);
+            g.arc(x, y, rr * 0.09, 0, Math.PI * 2);
+          }
+        } else if (motif === 1) {                           // spokes
+          for (let i = 0; i < sym; i++) {
+            const a = (i / sym) * Math.PI * 2;
+            g.moveTo(Math.cos(a) * rr * 0.45, Math.sin(a) * rr * 0.45);
+            g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+          }
+        } else if (motif === 2) {                           // polygon
+          for (let i = 0; i <= sym; i++) {
+            const a = (i / sym) * Math.PI * 2;
+            i ? g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr)
+              : g.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
+          }
+        } else if (motif === 3) {                           // petals / arcs
+          for (let i = 0; i < sym; i++) {
+            const a = (i / sym) * Math.PI * 2;
+            g.moveTo(Math.cos(a) * rr * 0.5, Math.sin(a) * rr * 0.5);
+            g.quadraticCurveTo(
+              Math.cos(a + 0.34) * rr, Math.sin(a + 0.34) * rr,
+              Math.cos(a + 0.68) * rr * 0.5, Math.sin(a + 0.68) * rr * 0.5);
+          }
+        } else {                                            // circuit steps
+          for (let i = 0; i < sym; i++) {
+            const a = (i / sym) * Math.PI * 2;
+            const s2 = rr * 0.16;
+            const x = Math.cos(a) * rr, y = Math.sin(a) * rr;
+            g.moveTo(x - s2, y - s2); g.lineTo(x + s2, y - s2);
+            g.lineTo(x + s2, y + s2); g.lineTo(x - s2, y + s2); g.closePath();
+          }
+        }
+        g.stroke();
+      }
+
+      // the concentric band itself
+      neon(band % 2 ? tier.accent : tier.color, 0.6, 0.3);
+      g.beginPath(); g.arc(0, 0, rr, 0, Math.PI * 2); g.stroke();
+    }
+
+    // burning core
+    const core = g.createRadialGradient(0, 0, 0, 0, 0, R * 0.3);
+    core.addColorStop(0, "rgba(255,255,255,.98)");
+    core.addColorStop(0.4, hexA(tier.accent, 0.8));
+    core.addColorStop(1, hexA(tier.color, 0));
+    g.fillStyle = core;
+    g.beginPath(); g.arc(0, 0, R * 0.3, 0, Math.PI * 2); g.fill();
+
+    return cv;
+  }
+
+  /* forms are built per sector and released when you leave, so only
+     111 of them ever sit in memory at once */
+  function buildForms(list) {
+    SECTOR_BEINGS.forEach(s => s.forEach(b => { b.form = null; }));
+    list.forEach(b => { b.form = makeForm(b); });
+  }
 
   /* ---------- pre-rendered glow sprites (drawn once, reused) ----------
      Painting a soft glow per being every frame would crawl on a phone.
@@ -159,7 +265,7 @@
     return {
       l: 46 / W,
       r: 1 - 46 / W,
-      t: Math.min(0.22, 104 / H),
+      t: Math.min(0.26, 132 / H),
       b: 1 - Math.min(0.32, 186 / H)
     };
   }
@@ -191,7 +297,7 @@
 
     being.x = Math.min(s.r + 0.03, Math.max(s.l - 0.03, being.x));
     being.y = Math.min(s.b + 0.03, Math.max(s.t - 0.03, being.y));
-    being.spin += 0.0004 * dt;
+    being.spin += 0.00016 * dt;
   }
 
   /* ---------- one being ---------- */
@@ -202,33 +308,32 @@
 
     const pulse = 1 + Math.sin(time * 0.0016 + being.phase) * 0.14;
     const scale = being.z * pulse;
-    const glow  = st.glow * scale;
 
+    // bloom underneath
+    const glow = st.glow * scale;
+    ctx.globalAlpha = 0.4;
     ctx.drawImage(SPRITE[being.tier], px - glow, py - glow, glow * 2, glow * 2);
+    ctx.globalAlpha = 1;
 
-    // the rare ones carry a turning geometric halo
-    if (st.ring) {
-      const rr = st.size * scale * 2.6;
-      ctx.save();
-      ctx.translate(px, py);
-      ctx.rotate(being.spin);
-      ctx.strokeStyle = hexA(being.color, 0.5);
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      for (let i = 0; i <= st.ring; i++) {
-        const a = (i / st.ring) * Math.PI * 2;
-        i ? ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr)
-          : ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
+    // the being's own form, turning slowly
+    if (being.form) {
+      const d = st.size * scale * 3.5;
+      if (st.turn) {                       // only the rare ones turn
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(being.spin * (being.n % 2 ? 1 : -1));
+        ctx.drawImage(being.form, -d, -d, d * 2, d * 2);
+        ctx.restore();
+      } else {
+        ctx.drawImage(being.form, px - d, py - d, d * 2, d * 2);
       }
-      ctx.stroke();
-      ctx.restore();
     }
 
     if (selected === being) {
       ctx.strokeStyle = "rgba(255,255,255,.85)";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.arc(px, py, st.size * scale * 3.4, 0, Math.PI * 2);
+      ctx.arc(px, py, st.size * scale * 4.4, 0, Math.PI * 2);
       ctx.stroke();
     }
   }
@@ -264,7 +369,7 @@
     let best = null, bestD = 34;          // generous target for fingers
     for (const b of beings) {
       const d = Math.hypot(b.x * W - px, b.y * H - py);
-      const reach = Math.max(18, TIER_STYLE[b.tier].size * b.z * 3);
+      const reach = Math.max(20, TIER_STYLE[b.tier].size * b.z * 3.6);
       if (d < reach && d < bestD) { best = b; bestD = d; }
     }
     selected = best;
@@ -285,6 +390,7 @@
         ? `<img class="art" src="${live.image}" alt="Being #${b.id}">
            <p class="owner">Held by <span>${live.owner}</span></p>`
         : `<div class="unrevealed" style="--c:${b.color}">
+             ${b.form ? `<img src="${b.form.toDataURL()}" alt="">` : ""}
              <span>UNREVEALED</span>
            </div>
            <p class="note">This being has not been drawn out of the realm yet.
@@ -303,6 +409,7 @@
     if (i >= ROUND) return;                 // sealed
     sector   = i;
     beings   = SECTOR_BEINGS[i];
+    buildForms(beings);
     selected = null;
     $("#being").classList.remove("show");
     document.body.classList.remove("picking");
