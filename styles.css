@@ -230,3 +230,11 @@ footer{text-align:center;padding:46px 18px 60px;border-top:1px solid var(--line)
   *{animation:none!important;transition:none!important}
   html{scroll-behavior:auto}
 }
+
+/* link through to the immersive realm */
+.enter-line{margin:-14px 0 22px}
+.enter-line a{
+  color:var(--cyan);text-decoration:none;font-size:.86rem;letter-spacing:.08em;
+  border-bottom:1px solid rgba(34,211,238,.35);padding-bottom:2px;
+}
+.enter-line a:hover{color:var(--text);border-color:var(--text)}

@@ -1,68 +1,11 @@
 /* ============================================================
-   REALM — edit everything in CONFIG below. Nothing else needs touching.
+   REALM — homepage rendering.
+
+   Nothing to edit here. All the settings, sectors and rarity tiers
+   live in data.js.
    ============================================================ */
 
-const CONFIG = {
-  // Which round is live right now (1–10). This unlocks sectors automatically.
-  currentRound: 1,
-
-  // How many of this round's 111 have been minted so far.
-  minted: 0,
-
-  // Paste your launchpad mint link here. Leave as "" to show "opens soon".
-  mintLink: "",
-
-  // Social + marketplace links.
-  links: {
-    x: "https://x.com/",
-    telegram: "https://t.me/",
-    marketplace: ""
-  }
-};
-
-const SUPPLY_PER_ROUND = 111;
-
-/* Rarity breakdown per round — must add up to 111. */
-const TIERS = [
-  { name: "Common",    count: 40, key: "common"    },
-  { name: "Uncommon",  count: 28, key: "uncommon"  },
-  { name: "Rare",      count: 18, key: "rare"      },
-  { name: "Epic",      count: 11, key: "epic"      },
-  { name: "Legendary", count: 7,  key: "legendary" },
-  { name: "Mythic",    count: 4,  key: "mythic"    },
-  { name: "Entity",    count: 2,  key: "entity"    },
-  { name: "God",       count: 1,  key: "god"       }
-];
-
-/* The ten sectors, in the order they open. */
-const SECTORS = [
-  { name: "The Threshold",
-    lore: "You do not arrive here. You are delivered. The Threshold is the held breath between the room you left and everything after it — a curtain of moving light that recognises you before you recognise yourself. The first beings wait at the edge, and they have been expecting you for longer than you have existed." },
-  { name: "The Chrysanthemum",
-    lore: "The gate is a flower and the flower is opening, petal folding out of petal without end. Every petal is a door and every door is the same door seen from further in. The beings of the Chrysanthemum are gardeners. They do not grow the flower. They keep it from closing." },
-  { name: "The Dome",
-    lore: "A vaulted chamber with no visible ceiling, ribbed in gold and breathing slowly. The walls are not walls; they are rows of watchers, packed shoulder to shoulder, leaning in. They have waited the entire time. When you enter, the whole dome turns to look, and something enormous is pleased." },
-  { name: "The Elf Workshop",
-    lore: "Machine elves, working at impossible speed, making objects that sing themselves into being and then insist you take them. They hand you gifts made of language. They are hysterical with delight that you came, and the gifts keep arriving faster than you can hold them." },
-  { name: "The Jester's Court",
-    lore: "A checkered floor tilting under a court of tricksters, where the joke is structural and the punchline is you. Nothing here lies, but nothing here is straight either. The Court teaches by laughter, and the lesson only lands once you have stopped defending yourself." },
-  { name: "The Hyperspace Corridor",
-    lore: "Not a place but a passage, screaming past at a speed with no number. Walls of braided colour, information travelling the other way. The corridor beings are ferrymen. They are indifferent to you. They have carried everything that has ever crossed, and they will carry what comes after." },
-  { name: "The Fractal Sea",
-    lore: "An ocean that is made of its own reflection, each wave containing the whole sea, each drop containing every wave. To look closely is to fall in. The beings here have no edges. They are patterns wearing the idea of a body, and they rise when the depth decides to speak." },
-  { name: "The Temple of Geometry",
-    lore: "Architecture that is alive and knows it is being observed. Columns solve themselves. Arches rearrange to stay beautiful from wherever you stand. The temple guardians are laws rather than creatures — the rules that keep the realm from spilling, given faces so you can bear them." },
-  { name: "The Loom",
-    lore: "Here the realm is woven. Threads of every colour that does not exist run through hands too fast to see, and each thread is a life, a timeline, a version of the room you left behind. The weavers do not look up. They are building the thing you are standing inside." },
-  { name: "The Source",
-    lore: "The centre. Light without a lamp, love without a condition, understanding without a question left to ask. There is nothing here to collect and nothing here to own. Everything you were carrying is set down at the door, and the realm finally shows you why it opened at all." }
-];
-
-/* ============================================================
-   Below this line: rendering. You do not need to edit it.
-   ============================================================ */
-
-const round = Math.min(Math.max(CONFIG.currentRound, 1), 10);
+const round = ROUND;
 const current = SECTORS[round - 1];
 
 /* --- little helpers --- */

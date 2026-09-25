@@ -19,8 +19,8 @@ There is nothing to configure. Railway sets `PORT` automatically and
 
 ## Changing the site
 
-Everything you will ever need to edit is at the **top of `app.js`**, in the
-block marked `CONFIG`. Nothing below that line needs touching.
+Everything you will ever need to edit is in **`data.js`**. Both the homepage
+and the immersive realm read from it, so you only change things in one place.
 
 ```js
 const CONFIG = {
@@ -59,12 +59,12 @@ reads "Mint opens soon" and cannot be clicked.
 
 ### Editing the story
 
-The `SECTORS` list in `app.js` holds each sector's name and lore.
+The `SECTORS` list in `data.js` holds each sector's name, lore and colour.
 Edit the text between the quotes. Keep all ten entries.
 
 ### Changing the rarity split
 
-The `TIERS` list holds the eight tiers. **The counts must add up to 111.**
+The `TIERS` list in `data.js` holds the eight tiers. **The counts must add up to 111.**
 
 ---
 
@@ -72,11 +72,31 @@ The `TIERS` list holds the eight tiers. **The counts must add up to 111.**
 
 | File | What it is |
 |------|------------|
-| `index.html` | the page structure |
-| `styles.css` | all the styling |
-| `app.js` | the config, the sector data, and the page logic |
+| **`data.js`** | **the only file you edit** — round, mint link, sectors, rarity |
+| `index.html` | the homepage |
+| `styles.css` | homepage styling |
+| `app.js` | homepage logic |
+| `realm.html` | the immersive full-screen realm |
+| `realm.css` | realm styling |
+| `realm.js` | the realm engine — 111 drifting beings per sector |
 | `server.js` | the tiny server Railway runs |
 | `package.json` | tells Railway how to start it |
+
+---
+
+## The immersive realm
+
+`realm.html` is a living map: 111 beings drift inside each sector, glowing in
+their rarity's colour, rarer ones larger and slower with turning geometric
+halos. Tap one to open it.
+
+Right now every being is **sealed** — no NFTs exist yet. After your first mint,
+put your collection address and a Helius API key in `data.js`, then follow the
+short note at the bottom of `realm.js` to switch the live data on. The beings
+that have been minted will then show their real artwork and current owner; the
+rest stay sealed.
+
+Sealed sectors can't be entered. `currentRound` controls that too.
 
 ---
 
