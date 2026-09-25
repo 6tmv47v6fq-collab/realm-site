@@ -47,7 +47,7 @@ body{
     radial-gradient(60% 40% at 90% 75%, rgba(232,121,249,.12), transparent 70%);
 }
 
-h1,h2,h3,.brand,.mark{font-family:'Cinzel',serif;font-weight:700;letter-spacing:.04em}
+h1,h2,h3,.brand,.mark{font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-weight:700;letter-spacing:.04em}
 
 /* nav */
 .nav{
@@ -128,7 +128,7 @@ h1,h2,h3,.brand,.mark{font-family:'Cinzel',serif;font-weight:700;letter-spacing:
 .node.current .ring{stroke:var(--gold);fill:rgba(251,191,36,.16);filter:drop-shadow(0 0 11px rgba(251,191,36,.9))}
 .node.current .num{fill:var(--gold)}
 .node.selected .ring{stroke-width:2.4}
-.node .num{font-family:'Cinzel',serif;font-size:13px;text-anchor:middle;dominant-baseline:central}
+.node .num{font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-size:13px;text-anchor:middle;dominant-baseline:central}
 .pulse{animation:pulse 2.8s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:.35}50%{opacity:.9}}
 
@@ -159,7 +159,7 @@ h1,h2,h3,.brand,.mark{font-family:'Cinzel',serif;font-weight:700;letter-spacing:
   background:transparent;border:1px solid var(--line);color:var(--text);transition:.2s;
 }
 .step:hover{border-color:var(--cyan);color:var(--cyan)}
-.qty-num{font-family:'Cinzel',serif;font-size:2rem;min-width:44px;text-align:center}
+.qty-num{font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-size:2rem;min-width:44px;text-align:center}
 .limit{text-align:center;margin:0;font-size:.78rem;color:var(--dim);letter-spacing:.1em}
 .fine{font-size:.76rem;color:var(--dim);text-align:center;margin:12px 0 0}
 
@@ -171,9 +171,9 @@ h1,h2,h3,.brand,.mark{font-family:'Cinzel',serif;font-weight:700;letter-spacing:
   background:linear-gradient(90deg,color-mix(in srgb,var(--c) 14%,transparent),transparent 60%);
 }
 .tier .dot{width:11px;height:11px;border-radius:50%;background:var(--c);box-shadow:0 0 14px var(--c);flex:none}
-.tier .name{font-family:'Cinzel',serif;letter-spacing:.09em;flex:1;font-size:.98rem}
+.tier .name{font-family:'Syne','Space Grotesk',system-ui,sans-serif;letter-spacing:.09em;flex:1;font-size:.98rem}
 .tier .count{font-size:.8rem;color:var(--dim);letter-spacing:.05em;text-align:right}
-.tier .count b{display:block;color:var(--text);font-weight:500;font-size:1.05rem;font-family:'Cinzel',serif}
+.tier .count b{display:block;color:var(--text);font-weight:500;font-size:1.05rem;font-family:'Syne','Space Grotesk',system-ui,sans-serif}
 
 /* cards */
 .cards{display:grid;gap:12px}
@@ -192,7 +192,7 @@ h1,h2,h3,.brand,.mark{font-family:'Cinzel',serif;font-weight:700;letter-spacing:
 .chapter.sealed .body{filter:blur(6px);user-select:none;opacity:.55}
 .chapter.sealed::after{
   content:'SEALED';position:absolute;inset:0;display:grid;place-items:center;
-  font-family:'Cinzel',serif;letter-spacing:.4em;font-size:.82rem;color:rgba(255,255,255,.7);
+  font-family:'Syne','Space Grotesk',system-ui,sans-serif;letter-spacing:.4em;font-size:.82rem;color:rgba(255,255,255,.7);
   background:rgba(5,3,11,.45);
 }
 
@@ -205,7 +205,7 @@ h1,h2,h3,.brand,.mark{font-family:'Cinzel',serif;font-weight:700;letter-spacing:
 }
 .timeline li.done::before{background:var(--violet);box-shadow:0 0 10px var(--violet)}
 .timeline li.now::before{background:var(--gold);border-color:var(--gold);box-shadow:0 0 12px var(--gold)}
-.timeline .r{font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.22em;color:var(--dim);text-transform:uppercase}
+.timeline .r{font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-size:.72rem;letter-spacing:.22em;color:var(--dim);text-transform:uppercase}
 .timeline .s{display:block;font-size:1rem;color:var(--text)}
 .timeline .d{font-size:.85rem;color:var(--dim)}
 
@@ -333,3 +333,18 @@ footer{text-align:center;padding:46px 18px 60px;border-top:1px solid var(--line)
 @media (prefers-reduced-motion:reduce){
   .aura,.hero h1,.section h2,.mark,.portal,.btn.primary,.round-flag{animation:none}
 }
+
+/* trippy type carries into the realm pages too */
+.realm-head h1,.being-card h3,.unrevealed span,.edge,
+.sector-panel h3,.chapter h3,.timeline .r,.tier .name,.qty-num{
+  font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-weight:800;
+}
+.realm-head h1{
+  letter-spacing:.1em;
+  animation:fringe2 5s ease-in-out infinite;
+}
+@keyframes fringe2{
+  0%,100%{text-shadow:-1.5px 0 #22d3ee,1.5px 0 #e879f9,0 0 20px #05030b}
+  50%    {text-shadow:1.5px 0 #fbbf24,-1.5px 0 #22d3ee,0 0 20px #05030b}
+}
+@media (prefers-reduced-motion:reduce){ .realm-head h1{animation:none} }

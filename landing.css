@@ -41,7 +41,7 @@
 @keyframes turnGate{to{transform:rotate(360deg)}}
 .enter-in{
   position:absolute;inset:0;z-index:2;display:grid;place-items:center;padding:0 14%;
-  font-family:'Cinzel',serif;font-weight:700;
+  font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-weight:700;
   font-size:clamp(1rem,5.2vw,1.45rem);letter-spacing:.16em;text-transform:uppercase;color:#fff;
   text-shadow:0 0 16px #a855f7,0 0 40px #22d3ee;
 }
@@ -60,12 +60,12 @@
 .options[hidden]{display:none}
 .options.here{opacity:1;transform:none}
 .arrived{
-  margin:0;font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.34em;
+  margin:0;font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-size:.72rem;letter-spacing:.34em;
   text-transform:uppercase;color:#b9aee0;
 }
 
 .gate .wordmark{
-  margin:0;font-family:'Cinzel',serif;font-weight:700;
+  margin:0;font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-weight:700;
   font-size:clamp(3rem,17vw,6.5rem);letter-spacing:.16em;line-height:1;
   background:linear-gradient(96deg,#fff,#22d3ee,#e879f9,#fbbf24,#34d399,#fff);
   background-size:320% 100%;
@@ -124,7 +124,7 @@
   padding:0 10%;
 }
 .hex-in b{
-  font-family:'Cinzel',serif;font-weight:700;
+  font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-weight:700;
   font-size:clamp(.82rem,3.9vw,1.12rem);letter-spacing:.14em;color:#fff;
   text-shadow:0 0 14px hsl(var(--h,275) 100% 62%),0 0 30px hsl(var(--h,275) 100% 55%);
 }
@@ -180,7 +180,7 @@
 
 .panel-in{max-width:620px;margin:0 auto}
 .panel h2{
-  font-family:'Cinzel',serif;font-size:1.5rem;margin:0 0 8px;
+  font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-size:1.5rem;margin:0 0 8px;
   letter-spacing:.16em;text-transform:uppercase;
   background:linear-gradient(90deg,#22d3ee,#a855f7,#e879f9,#fbbf24,#22d3ee);
   background-size:300% 100%;
@@ -200,4 +200,63 @@
 }
 @media (prefers-reduced-motion:reduce){
   .gate .wordmark,.panel h2,.hex::before,.enter::before,.landing .round-flag{animation:none}
+}
+
+/* ============================================================
+   TRIPPY TYPE — neon tubing, chromatic fringing, a slow warp
+   ============================================================ */
+
+.gate .wordmark{
+  font-family:'Monoton','Syne',system-ui,sans-serif;font-weight:400;
+  font-size:clamp(2.6rem,15vw,5.6rem);letter-spacing:.06em;
+  animation:slide 6s linear infinite, warp 9s ease-in-out infinite;
+}
+
+/* the colour separating out, like light through a prism */
+@keyframes warp{
+  0%,100%{transform:skewX(0deg)   scaleY(1)}
+  25%    {transform:skewX(-3.5deg) scaleY(1.05)}
+  50%    {transform:skewX(0deg)   scaleY(.96)}
+  75%    {transform:skewX(3.5deg)  scaleY(1.04)}
+}
+
+.enter-in,.hex-in b,.arrived,.panel h2,.landing .round-flag{
+  font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-weight:800;
+}
+
+.enter-in{
+  letter-spacing:.12em;
+  animation:fringe 3.4s ease-in-out infinite;
+}
+@keyframes fringe{
+  0%,100%{text-shadow:-2px 0 #22d3ee, 2px 0 #e879f9, 0 0 22px #a855f7}
+  33%    {text-shadow: 2px 1px #fbbf24,-2px -1px #22d3ee, 0 0 30px #e879f9}
+  66%    {text-shadow:-1px 2px #34d399, 1px -2px #e879f9, 0 0 26px #22d3ee}
+}
+
+.hex-in b{
+  letter-spacing:.08em;
+  animation:fringe 5s ease-in-out infinite;
+  animation-delay:calc(var(--h,0) * -12ms);
+}
+.hex-in i{font-family:'Space Grotesk',sans-serif;font-weight:500;letter-spacing:.22em}
+
+.arrived{
+  animation:fringe 6s ease-in-out infinite;
+  color:#fff;
+}
+
+.panel h2{letter-spacing:.1em}
+
+/* the whole gate breathes very slightly */
+.gate,.options{animation:sway 17s ease-in-out infinite}
+@keyframes sway{
+  0%,100%{filter:hue-rotate(0deg)}
+  50%    {filter:hue-rotate(26deg)}
+}
+.gate.gone{animation:none}
+
+@media (prefers-reduced-motion:reduce){
+  .gate .wordmark,.enter-in,.hex-in b,.arrived,.gate,.options{animation:none}
+  .enter-in{text-shadow:0 0 20px #a855f7}
 }
