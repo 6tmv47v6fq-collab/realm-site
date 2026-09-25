@@ -1,11 +1,11 @@
 /* ============================================================
    REALM — the 3D world.
 
-   Each sector is a place you fly through, with its 111 beings
-   floating in it. Drag to look, and you drift forward on your own.
+   Each sector is an enclosed chamber you fly around inside. The walls
+   are real: you cannot leave, and the beings cannot either.
 
-   Nothing here needs editing — sectors, lore and rarity all come
-   from data.js, and the beings' appearance from forms.js.
+   Nothing here needs editing — sectors, lore and rarity come from
+   data.js, and the beings' appearance from forms.js.
    ============================================================ */
 
 (() => {
@@ -34,178 +34,286 @@
   }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 
-  const { makeForm } = window.RealmForms;
+  const { makeForm, seeded } = window.RealmForms;
+
+  /* ---------- the shape of each sector ----------
+     box  — a hall, w × h × d
+     cyl  — a round chamber, radius r, height h
+     tube — a corridor of radius r running d deep     */
+  const SHAPES = [
+    { kind: "tube", r: 24, d: 150 },   // The Threshold — a passage of gates
+    { kind: "cyl",  r: 46, h: 46 },    // The Chrysanthemum
+    { kind: "cyl",  r: 50, h: 50 },    // The Dome
+    { kind: "box",  w: 80, h: 38, d: 80 }, // The Elf Workshop
+    { kind: "box",  w: 84, h: 38, d: 84 }, // The Jester's Court
+    { kind: "tube", r: 20, d: 180 },   // The Hyperspace Corridor
+    { kind: "box",  w: 100, h: 30, d: 100 }, // The Fractal Sea
+    { kind: "box",  w: 56, h: 42, d: 130 },  // The Temple of Geometry
+    { kind: "cyl",  r: 46, h: 54 },    // The Loom
+    { kind: "cyl",  r: 38, h: 40 }     // The Source
+  ];
 
   /* ---------- scene ---------- */
   const scene  = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(70, 1, 0.1, 400);
+  const camera = new THREE.PerspectiveCamera(70, 1, 0.1, 500);
   camera.rotation.order = "YXZ";
   const clock  = new THREE.Clock();
 
   let sector = ROUND - 1;
-  let env    = new THREE.Group();     // the sector's architecture
-  let swarm  = new THREE.Group();     // its beings
+  let shape  = SHAPES[sector];
+  let env    = new THREE.Group();
+  let swarm  = new THREE.Group();
   scene.add(env, swarm);
 
-  /* ---------- camera control ---------- */
   const view = { yaw: 0, pitch: -0.05, drift: true };
-  const pos  = new THREE.Vector3(0, 5, 46);
+  const pos  = new THREE.Vector3();
   const dir  = new THREE.Vector3();
-  const BOUND = 78;
 
-  /* ---------- helpers ---------- */
   const hsl = (h, s, l) => new THREE.Color().setHSL(((h % 360) + 360) % 360 / 360, s, l);
 
   function lines(points, color, opacity) {
-    const geo = new THREE.BufferGeometry().setFromPoints(points);
-    return new THREE.LineSegments(geo,
+    return new THREE.LineSegments(
+      new THREE.BufferGeometry().setFromPoints(points),
       new THREE.LineBasicMaterial({ color, transparent: true, opacity }));
   }
-
-  /* a closed ring of points, as line segments */
-  function ring(radius, sides, y, z, color, opacity, squash) {
-    const pts = [];
-    for (let i = 0; i < sides; i++) {
-      const a = (i / sides) * Math.PI * 2, b = ((i + 1) / sides) * Math.PI * 2;
-      pts.push(new THREE.Vector3(Math.cos(a) * radius, y + Math.sin(a) * radius * (squash || 1), z));
-      pts.push(new THREE.Vector3(Math.cos(b) * radius, y + Math.sin(b) * radius * (squash || 1), z));
-    }
-    return lines(pts, color, opacity);
-  }
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
   function box(w, h, d, x, y, z, color, opacity) {
-    const g = new THREE.EdgesGeometry(new THREE.BoxGeometry(w, h, d));
-    const m = new THREE.LineSegments(g,
+    const m = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(w, h, d)),
       new THREE.LineBasicMaterial({ color, transparent: true, opacity }));
     m.position.set(x, y, z);
     return m;
   }
 
-  /* the floor, in every sector */
-  function floor(color) {
-    const pts = [], N = 34, S = 150, step = S / N;
-    for (let i = 0; i <= N; i++) {
-      const p = -S / 2 + i * step;
-      pts.push(new THREE.Vector3(-S / 2, 0, p), new THREE.Vector3(S / 2, 0, p));
-      pts.push(new THREE.Vector3(p, 0, -S / 2), new THREE.Vector3(p, 0, S / 2));
+  /* ---------- the shell: floor, ceiling and walls ----------
+     This is what makes a sector feel sealed rather than open. */
+  function buildShell(sh, c1, c2) {
+    const g = new THREE.Group();
+    const pts = [], cap = [];
+    const STEP = 6;
+
+    if (sh.kind === "box") {
+      const w = sh.w / 2, h = sh.h, d = sh.d / 2;
+
+      for (let x = -w; x <= w; x += STEP) {            // floor + ceiling
+        pts.push(V(x, 0, -d), V(x, 0, d));
+        cap.push(V(x, h, -d), V(x, h, d));
+      }
+      for (let z = -d; z <= d; z += STEP) {
+        pts.push(V(-w, 0, z), V(w, 0, z));
+        cap.push(V(-w, h, z), V(w, h, z));
+      }
+      for (let x = -w; x <= w; x += STEP) {            // front + back walls
+        cap.push(V(x, 0, -d), V(x, h, -d), V(x, 0, d), V(x, h, d));
+      }
+      for (let z = -d; z <= d; z += STEP) {            // left + right walls
+        cap.push(V(-w, 0, z), V(-w, h, z), V(w, 0, z), V(w, h, z));
+      }
+      for (let y = 0; y <= h; y += STEP) {
+        cap.push(V(-w, y, -d), V(w, y, -d), V(-w, y, d), V(w, y, d));
+        cap.push(V(-w, y, -d), V(-w, y, d), V(w, y, -d), V(w, y, d));
+      }
+
+    } else if (sh.kind === "cyl") {
+      const r = sh.r, h = sh.h, SIDES = 40;
+
+      for (let i = 0; i < SIDES; i++) {                // vertical ribs
+        const a = (i / SIDES) * Math.PI * 2;
+        const x = Math.cos(a) * r, z = Math.sin(a) * r;
+        cap.push(V(x, 0, z), V(x, h, z));
+        pts.push(V(0, 0, 0), V(x, 0, z));              // floor spokes
+        cap.push(V(0, h, 0), V(x, h, z));              // ceiling spokes
+      }
+      for (let y = 0; y <= h; y += STEP) {             // hoops up the wall
+        for (let i = 0; i < SIDES; i++) {
+          const a = (i / SIDES) * Math.PI * 2, b = ((i + 1) / SIDES) * Math.PI * 2;
+          cap.push(V(Math.cos(a) * r, y, Math.sin(a) * r),
+                   V(Math.cos(b) * r, y, Math.sin(b) * r));
+        }
+      }
+      for (let k = 1; k <= 7; k++) {                   // rings on the floor
+        const rr = (k / 7) * r;
+        for (let i = 0; i < SIDES; i++) {
+          const a = (i / SIDES) * Math.PI * 2, b = ((i + 1) / SIDES) * Math.PI * 2;
+          pts.push(V(Math.cos(a) * rr, 0, Math.sin(a) * rr),
+                   V(Math.cos(b) * rr, 0, Math.sin(b) * rr));
+        }
+      }
+
+    } else {                                            // tube
+      const r = sh.r, d = sh.d / 2, SIDES = 26;
+
+      for (let z = -d; z <= d; z += STEP) {             // hoops down the tube
+        for (let i = 0; i < SIDES; i++) {
+          const a = (i / SIDES) * Math.PI * 2, b = ((i + 1) / SIDES) * Math.PI * 2;
+          cap.push(V(Math.cos(a) * r, Math.sin(a) * r + r, z),
+                   V(Math.cos(b) * r, Math.sin(b) * r + r, z));
+        }
+      }
+      for (let i = 0; i < SIDES; i++) {                 // rails along its length
+        const a = (i / SIDES) * Math.PI * 2;
+        pts.push(V(Math.cos(a) * r, Math.sin(a) * r + r, -d),
+                 V(Math.cos(a) * r, Math.sin(a) * r + r, d));
+      }
+      for (const end of [-d, d]) {                      // the sealed ends
+        for (let k = 1; k <= 6; k++) {
+          const rr = (k / 6) * r;
+          for (let i = 0; i < SIDES; i++) {
+            const a = (i / SIDES) * Math.PI * 2, b = ((i + 1) / SIDES) * Math.PI * 2;
+            cap.push(V(Math.cos(a) * rr, Math.sin(a) * rr + r, end),
+                     V(Math.cos(b) * rr, Math.sin(b) * rr + r, end));
+          }
+        }
+      }
     }
-    return lines(pts, color, 0.16);
+
+    g.add(lines(pts, c1, 0.22));
+    g.add(lines(cap, c2, 0.15));
+    return g;
   }
 
-  /* ---------- the ten places ----------
-     Each sector is built from cheap neon linework so it stays fast. */
-  function build(i) {
-    const g   = new THREE.Group();
-    const hue = SECTORS[i].hue;
-    const c1  = hsl(hue, 0.85, 0.6);
-    const c2  = hsl(hue + 45, 0.8, 0.62);
+  /* is this point inside the chamber? pull it back if not */
+  function confine(p, sh, margin) {
+    let hit = false;
+    if (sh.kind === "box") {
+      const w = sh.w / 2 - margin, d = sh.d / 2 - margin;
+      if (p.x < -w) { p.x = -w; hit = true; } if (p.x > w) { p.x = w; hit = true; }
+      if (p.z < -d) { p.z = -d; hit = true; } if (p.z > d) { p.z = d; hit = true; }
+      if (p.y < margin) { p.y = margin; hit = true; }
+      if (p.y > sh.h - margin) { p.y = sh.h - margin; hit = true; }
 
-    g.add(floor(c1));
+    } else if (sh.kind === "cyl") {
+      const r = sh.r - margin;
+      const rad = Math.hypot(p.x, p.z);
+      if (rad > r) { p.x *= r / rad; p.z *= r / rad; hit = true; }
+      if (p.y < margin) { p.y = margin; hit = true; }
+      if (p.y > sh.h - margin) { p.y = sh.h - margin; hit = true; }
+
+    } else {
+      const r = sh.r - margin, d = sh.d / 2 - margin;
+      const cy = p.y - sh.r;
+      const rad = Math.hypot(p.x, cy);
+      if (rad > r) { p.x *= r / rad; p.y = sh.r + cy * (r / rad); hit = true; }
+      if (p.z < -d) { p.z = -d; hit = true; } if (p.z > d) { p.z = d; hit = true; }
+    }
+    return hit;
+  }
+
+  /* a random point well inside the chamber */
+  function inside(sh, rnd) {
+    if (sh.kind === "box")
+      return V((rnd() - 0.5) * sh.w * 0.82, 2 + rnd() * (sh.h - 5), (rnd() - 0.5) * sh.d * 0.82);
+    if (sh.kind === "cyl") {
+      const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * sh.r * 0.84;
+      return V(Math.cos(a) * r, 2 + rnd() * (sh.h - 5), Math.sin(a) * r);
+    }
+    const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * sh.r * 0.78;
+    return V(Math.cos(a) * r, sh.r + Math.sin(a) * r, (rnd() - 0.5) * sh.d * 0.88);
+  }
+
+  /* ---------- what stands inside each sector ---------- */
+  function furnish(i, sh, c1, c2) {
+    const g = new THREE.Group();
 
     switch (i) {
-      case 0:  // The Threshold — gateways receding into light
-        for (let k = 0; k < 14; k++) {
-          const z = -k * 11, s = 15 + k * 0.6;
-          g.add(box(s * 2, s * 1.5, 0.4, 0, s * 0.75, z, k % 2 ? c1 : c2, 0.5 - k * 0.025));
+      case 0:  // gateways down the passage
+        for (let k = 0; k < 12; k++) {
+          const z = sh.d / 2 - 8 - k * 12, s = 13 - k * 0.15;
+          g.add(box(s * 1.6, s * 1.5, 0.4, 0, sh.r, z, k % 2 ? c1 : c2, 0.55 - k * 0.03));
         }
         break;
 
-      case 1:  // The Chrysanthemum — petals opening without end
-        for (let k = 0; k < 11; k++) {
+      case 1:  // petals opening
+        for (let k = 0; k < 10; k++) {
           const r = new THREE.Mesh(
-            new THREE.TorusGeometry(9 + k * 4.2, 0.14, 4, 30),
+            new THREE.TorusGeometry(7 + k * 3.6, 0.13, 4, 28),
             new THREE.MeshBasicMaterial({ color: k % 2 ? c1 : c2, transparent: true, opacity: 0.5 }));
-          r.rotation.set(Math.PI / 2 + k * 0.1, k * 0.36, 0);
-          r.position.y = 3 + k * 1.1;
+          r.rotation.set(Math.PI / 2 + k * 0.11, k * 0.38, 0);
+          r.position.y = 4 + k * 1.2;
           g.add(r);
         }
         break;
 
-      case 2:  // The Dome — a ceiling of watchers
-        for (let k = 1; k <= 9; k++) {
-          const band = ring(52 * Math.sin((k / 10) * Math.PI / 2), 40, 0, 0, c1, 0.3);
-          band.rotation.x = Math.PI / 2;
-          band.position.y = 52 * Math.cos((k / 10) * Math.PI / 2) * 0.72 + 4;
-          g.add(band);
-        }
-        for (let k = 0; k < 9; k++) {
-          const dm = ring(54, 44, 0, 0, c2, 0.26);
-          dm.rotation.y = (k / 9) * Math.PI;
-          g.add(dm);
-        }
-        for (let k = 0; k < 26; k++) {
-          const a = (k / 26) * Math.PI * 2;
-          g.add(box(2.4, 26, 2.4, Math.cos(a) * 50, 13, Math.sin(a) * 50, c1, 0.42));
+      case 2:  // the watchers around the dome
+        for (let k = 0; k < 24; k++) {
+          const a = (k / 24) * Math.PI * 2;
+          g.add(box(2.2, 24, 2.2, Math.cos(a) * (sh.r - 5), 12, Math.sin(a) * (sh.r - 5), c1, 0.45));
         }
         break;
 
-      case 3:  // The Elf Workshop — machines stacked to the roof
-        for (let k = 0; k < 90; k++) {
-          const a = Math.random() * Math.PI * 2, r = 12 + Math.random() * 48;
-          const s = 1.6 + Math.random() * 5;
-          g.add(box(s, s, s, Math.cos(a) * r, 1 + Math.random() * 26, Math.sin(a) * r,
+      case 3:  // machines stacked high
+        for (let k = 0; k < 80; k++) {
+          const a = Math.random() * Math.PI * 2, r = 8 + Math.random() * (sh.w / 2 - 12);
+          const s = 1.6 + Math.random() * 4.5;
+          g.add(box(s, s, s, Math.cos(a) * r, 1 + Math.random() * (sh.h - 6), Math.sin(a) * r,
                     Math.random() < 0.5 ? c1 : c2, 0.5));
         }
         break;
 
-      case 4:  // The Jester's Court — a tilted, checkered hall
-        for (let k = 0; k < 20; k++) {
-          const a = (k / 20) * Math.PI * 2;
-          const p = box(2, 30, 2, Math.cos(a) * 42, 15, Math.sin(a) * 42, k % 2 ? c1 : c2, 0.5);
-          p.rotation.z = (k % 2 ? 1 : -1) * 0.14;
+      case 4:  // tilted columns of the court
+        for (let k = 0; k < 18; k++) {
+          const a = (k / 18) * Math.PI * 2, r = sh.w / 2 - 9;
+          const p = box(2, sh.h - 4, 2, Math.cos(a) * r, (sh.h - 4) / 2, Math.sin(a) * r,
+                        k % 2 ? c1 : c2, 0.5);
+          p.rotation.z = (k % 2 ? 1 : -1) * 0.13;
           g.add(p);
         }
-        for (let k = 0; k < 8; k++) {
-          const tile = ring(10 + k * 6, 4, 0, 0, c2, 0.3);
-          tile.rotation.x = Math.PI / 2;
-          tile.position.y = 0.1;
-          g.add(tile);
+        break;
+
+      case 5:  // rings rushing down the corridor
+        for (let k = 0; k < 26; k++) {
+          const m = new THREE.Mesh(
+            new THREE.TorusGeometry(sh.r - 3, 0.16, 4, 24),
+            new THREE.MeshBasicMaterial({ color: k % 3 ? c1 : c2, transparent: true, opacity: 0.45 }));
+          m.position.set(0, sh.r, sh.d / 2 - 6 - k * 6.6);
+          g.add(m);
         }
         break;
 
-      case 5:  // The Hyperspace Corridor — a passage at impossible speed
-        for (let k = 0; k < 40; k++) {
-          const r = ring(20, 26, 6, -k * 9 + 40, k % 3 ? c1 : c2, 0.5);
-          g.add(r);
-        }
-        break;
-
-      case 6:  // The Fractal Sea — an ocean of its own reflection
-        for (let row = -12; row <= 12; row++) {
+      case 6:  // the sea's own surface
+        for (let row = -9; row <= 9; row++) {
           const pts = [];
-          for (let x = -60; x <= 60; x += 4) {
-            const y = Math.sin(x * 0.08 + row * 0.5) * 2.4 + Math.cos(row * 0.32) * 1.8;
-            pts.push(new THREE.Vector3(x, y, row * 5),
-                     new THREE.Vector3(x + 4, Math.sin((x + 4) * 0.08 + row * 0.5) * 2.4 +
-                                              Math.cos(row * 0.32) * 1.8, row * 5));
+          for (let x = -sh.w / 2 + 4; x <= sh.w / 2 - 4; x += 4) {
+            const y1 = Math.sin(x * 0.08 + row * 0.5) * 2.2 + Math.cos(row * 0.32) * 1.6 + 5;
+            const y2 = Math.sin((x + 4) * 0.08 + row * 0.5) * 2.2 + Math.cos(row * 0.32) * 1.6 + 5;
+            pts.push(V(x, y1, row * 5), V(x + 4, y2, row * 5));
           }
-          g.add(lines(pts, row % 2 ? c1 : c2, 0.34));
+          g.add(lines(pts, row % 2 ? c1 : c2, 0.36));
         }
         break;
 
-      case 7:  // The Temple of Geometry — laws given columns
+      case 7:  // the colonnade
         for (let side = -1; side <= 1; side += 2)
-          for (let k = 0; k < 11; k++) {
-            g.add(box(3, 34, 3, side * 20, 17, -k * 12 + 40, c1, 0.5));
-            g.add(box(3, 1.4, 10, side * 20, 34, -k * 12 + 34, c2, 0.4));
+          for (let k = 0; k < 10; k++) {
+            const z = sh.d / 2 - 8 - k * 12;
+            g.add(box(3, sh.h - 6, 3, side * 17, (sh.h - 6) / 2, z, c1, 0.5));
+            g.add(box(3, 1.3, 9, side * 17, sh.h - 6, z - 4, c2, 0.4));
           }
-        for (let k = 0; k < 11; k++) g.add(box(43, 1.4, 3, 0, 35, -k * 12 + 40, c2, 0.34));
+        for (let k = 0; k < 10; k++)
+          g.add(box(37, 1.3, 3, 0, sh.h - 5, sh.d / 2 - 8 - k * 12, c2, 0.32));
         break;
 
-      case 8:  // The Loom — every thread a life
-        for (let k = 0; k < 150; k++) {
-          const a = Math.random() * Math.PI * 2, r = 8 + Math.random() * 54;
+      case 8:  // the hanging threads
+        for (let k = 0; k < 130; k++) {
+          const a = Math.random() * Math.PI * 2, r = 5 + Math.random() * (sh.r - 8);
           const x = Math.cos(a) * r, z = Math.sin(a) * r;
-          g.add(lines([new THREE.Vector3(x, 0, z), new THREE.Vector3(x, 30 + Math.random() * 22, z)],
-                      Math.random() < 0.5 ? c1 : c2, 0.24));
+          g.add(lines([V(x, 0, z), V(x, sh.h - 1, z)],
+                      Math.random() < 0.5 ? c1 : c2, 0.22));
         }
         break;
 
-      default: // The Source — light without a lamp
-        for (let k = 1; k <= 16; k++) {
-          const halo = ring(k * 3.4, 36, 0, 0, k % 2 ? c1 : c2, 0.4 - k * 0.018);
-          halo.rotation.x = Math.PI / 2 + k * 0.05;
-          halo.position.y = 12;
+      default: // light without a lamp
+        for (let k = 1; k <= 14; k++) {
+          const rr = (k / 14) * (sh.r - 4), SIDES = 34, pts = [];
+          for (let n = 0; n < SIDES; n++) {
+            const a = (n / SIDES) * Math.PI * 2, b = ((n + 1) / SIDES) * Math.PI * 2;
+            pts.push(V(Math.cos(a) * rr, 0, Math.sin(a) * rr),
+                     V(Math.cos(b) * rr, 0, Math.sin(b) * rr));
+          }
+          const halo = lines(pts, k % 2 ? c1 : c2, 0.45 - k * 0.02);
+          halo.position.y = sh.h / 2;
+          halo.rotation.x = k * 0.06;
           g.add(halo);
         }
         break;
@@ -220,8 +328,7 @@
   const SCALE = { common: 1.5, uncommon: 1.9, rare: 2.5, epic: 3.4,
                   legendary: 4.6, mythic: 6, entity: 7.8, god: 11 };
 
-  function makeBeings(index) {
-    const { seeded } = window.RealmForms;
+  function makeBeings(index, sh) {
     const rnd   = seeded(index * 7919 + 13);
     const order = tierOf.slice();
     for (let a = order.length - 1; a > 0; a--) {
@@ -229,8 +336,7 @@
       [order[a], order[b]] = [order[b], order[a]];
     }
 
-    const group = new THREE.Group();
-    const list  = [];
+    const group = new THREE.Group(), list = [];
 
     order.forEach((key, n) => {
       const tier  = TIERS.find(t => t.key === key);
@@ -240,23 +346,23 @@
       };
       being.form = makeForm(being);
 
-      const tex = new THREE.CanvasTexture(being.form);
-      const sp  = new THREE.Sprite(new THREE.SpriteMaterial({
-        map: tex, transparent: true, fog: false,
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: new THREE.CanvasTexture(being.form),
+        transparent: true, fog: false,
         blending: THREE.AdditiveBlending, depthWrite: false
       }));
 
       const s = SCALE[key];
       sp.scale.set(s, s, 1);
 
-      const a = rnd() * Math.PI * 2, r = 6 + rnd() * 58;
-      sp.position.set(Math.cos(a) * r, 2 + rnd() * 30, Math.sin(a) * r);
+      const p = inside(sh, rnd);
+      confine(p, sh, s);
+      sp.position.copy(p);
 
       sp.userData.being = being;
-      sp.userData.bob   = { phase: rnd() * 6.3, speed: 0.2 + rnd() * 0.5, amp: 0.4 + rnd() * 1.6 };
+      sp.userData.bob   = { phase: rnd() * 6.3, speed: 0.2 + rnd() * 0.5, amp: 0.3 + rnd() * 1.2 };
       sp.userData.home  = sp.position.clone();
 
-      being.sprite = sp;
       group.add(sp);
       list.push(sp);
     });
@@ -276,23 +382,36 @@
     }
 
     sector = i;
+    shape  = SHAPES[i];
 
     scene.remove(env, swarm);
     env.traverse(o => { o.geometry && o.geometry.dispose(); o.material && o.material.dispose(); });
-    swarm.traverse(o => { o.material && o.material.map && o.material.map.dispose(); });
+    swarm.traverse(o => {
+      if (o.material) { o.material.map && o.material.map.dispose(); o.material.dispose(); }
+    });
 
-    env = build(i);
-    const made = makeBeings(i);
+    const hue = SECTORS[i].hue;
+    const c1  = hsl(hue, 0.85, 0.6);
+    const c2  = hsl(hue + 45, 0.8, 0.62);
+
+    env = new THREE.Group();
+    env.add(buildShell(shape, c1, c2));
+    env.add(furnish(i, shape, c1, c2));
+
+    const made = makeBeings(i, shape);
     swarm   = made.group;
     sprites = made.list;
     scene.add(env, swarm);
 
-    const hue = SECTORS[i].hue;
-    scene.fog = new THREE.FogExp2(hsl(hue, 0.7, 0.05).getHex(), 0.011);
-    renderer.setClearColor(hsl(hue, 0.65, 0.035).getHex(), 1);
+    scene.fog = new THREE.FogExp2(hsl(hue, 0.7, 0.05).getHex(), 0.0085);
+    renderer.setClearColor(hsl(hue, 0.65, 0.03).getHex(), 1);
 
-    pos.set(0, 5, 46);
-    view.yaw = 0; view.pitch = -0.05; view.drift = true;
+    // stand just inside the near end, looking in
+    if (shape.kind === "tube") pos.set(0, shape.r, shape.d / 2 - 12);
+    else if (shape.kind === "cyl") pos.set(0, shape.h * 0.4, shape.r - 10);
+    else pos.set(0, shape.h * 0.4, shape.d / 2 - 10);
+
+    view.yaw = Math.PI; view.pitch = -0.04; view.drift = true;
     select(null);
     setDrift();
 
@@ -306,11 +425,12 @@
   let chosen = null;
 
   function select(sp) {
-    if (chosen && chosen !== sp) {            // put the last one back to its true size
+    if (chosen && chosen !== sp) {
       const was = SCALE[chosen.userData.being.tier];
       chosen.scale.set(was, was, 1);
     }
     chosen = sp;
+
     const card = $("#being");
     if (!sp) {
       card.classList.remove("show");
@@ -337,7 +457,7 @@
     card.querySelector(".close").onclick = () => select(null);
   }
 
-  /* ---------- input: drag to look, tap to choose ---------- */
+  /* ---------- input ---------- */
   const ray = new THREE.Raycaster();
   let dragging = false, moved = 0, lastX = 0, lastY = 0;
 
@@ -352,31 +472,39 @@
     lastX = e.clientX; lastY = e.clientY;
     moved += Math.abs(dx) + Math.abs(dy);
     view.yaw   -= dx * 0.0042;
-    view.pitch -= dy * 0.0035;
-    view.pitch  = Math.max(-1.1, Math.min(1.1, view.pitch));
+    view.pitch  = Math.max(-1.1, Math.min(1.1, view.pitch - dy * 0.0035));
   });
 
   canvas.addEventListener("pointerup", e => {
     dragging = false;
     try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
-    if (moved > 9) return;                       // that was a look, not a tap
+    if (moved > 9) return;
 
     const r = canvas.getBoundingClientRect();
-    const v = new THREE.Vector2(
+    ray.setFromCamera(new THREE.Vector2(
       ((e.clientX - r.left) / r.width) * 2 - 1,
-      -((e.clientY - r.top) / r.height) * 2 + 1);
-    ray.setFromCamera(v, camera);
+      -((e.clientY - r.top) / r.height) * 2 + 1), camera);
     const hits = ray.intersectObjects(sprites, false);
     select(hits.length ? hits[0].object : null);
   });
 
-  /* ---------- drift ---------- */
+  /* ---------- move / stop ---------- */
   const driftBtn = $("#drift");
   function setDrift() {
     driftBtn.textContent = view.drift ? "Stop" : "Move";
     driftBtn.classList.toggle("moving", view.drift);
   }
   driftBtn.onclick = () => { view.drift = !view.drift; setDrift(); };
+
+  /* ---------- the wall ---------- */
+  const edge = $("#edge");
+  let edgeUntil = 0;
+  function hitWall(t) {
+    if (t < edgeUntil) return;
+    edgeUntil = t + 2.6;
+    edge.classList.add("show");
+    setTimeout(() => edge.classList.remove("show"), 1500);
+  }
 
   /* ---------- resize ---------- */
   function resize() {
@@ -405,23 +533,18 @@
     if (view.drift) {
       camera.getWorldDirection(dir);
       pos.addScaledVector(dir, dt * 11);
-      if (pos.length() > BOUND) pos.setLength(BOUND * 0.985);
-      pos.y = Math.max(1.6, Math.min(46, pos.y));
+      if (confine(pos, shape, 3)) hitWall(t);
     }
     camera.position.copy(pos);
 
-    // beings breathe in place
     for (const sp of sprites) {
       const b = sp.userData.bob;
       sp.position.y = sp.userData.home.y + Math.sin(t * b.speed + b.phase) * b.amp;
       if (sp === chosen) {
-        const p = 1 + Math.sin(t * 5) * 0.09;
-        const s = SCALE[sp.userData.being.tier] * p;
+        const s = SCALE[sp.userData.being.tier] * (1 + Math.sin(t * 5) * 0.09);
         sp.scale.set(s, s, 1);
       }
     }
-
-    env.rotation.y += dt * 0.006;
 
     renderer.render(scene, camera);
     requestAnimationFrame(tick);
@@ -447,7 +570,6 @@
   try {
     resize();
     enter(sector);
-    setDrift();
     requestAnimationFrame(tick);
   } catch (e) {
     fail("Something went wrong building the realm: " + e.message);
