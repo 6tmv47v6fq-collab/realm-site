@@ -3,7 +3,7 @@
    ============================================================ */
 
 .landing{
-  margin:0;min-height:100svh;overflow-x:hidden;background:#000;
+  position:relative;margin:0;min-height:100svh;overflow-x:hidden;background:#000;
   -webkit-tap-highlight-color:transparent;
 }
 #sky{
@@ -13,7 +13,7 @@
 
 /* ---------- the door ---------- */
 .gate{
-  position:fixed;inset:0;z-index:10;
+  position:absolute;inset:0;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:clamp(4px,1vh,12px);
   padding:8px 4px 16px;text-align:center;
@@ -61,6 +61,9 @@
 #keeper{
   max-width:min(104vw,600px);max-height:100%;width:auto;height:auto;
   display:block;opacity:0;transition:opacity .8s ease-out;
+  /* the art is painted on black; screen blending drops that black away
+     so the smoke drifts behind the being instead of stopping at a box */
+  mix-blend-mode:screen;
   filter:drop-shadow(0 0 46px rgba(139,92,246,.5));
   animation:keeperBreathe 13s ease-in-out infinite;
   /* the art is on black — feather it so it never reads as a pasted box */
@@ -90,7 +93,7 @@
 
 /* ---------- where you come out ---------- */
 .options{
-  position:fixed;inset:0;z-index:10;
+  position:absolute;inset:0;z-index:2;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:clamp(12px,2.6vh,22px);
   padding:max(20px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom));
@@ -287,13 +290,8 @@
 
 .panel h2{letter-spacing:.1em}
 
-/* the whole gate breathes very slightly */
-.gate,.options{animation:sway 17s ease-in-out infinite}
-@keyframes sway{
-  0%,100%{filter:hue-rotate(0deg)}
-  50%    {filter:hue-rotate(26deg)}
-}
-.gate.gone{animation:none}
+/* No filter on .gate or .options: a filter isolates everything inside
+   from the backdrop, and that stops the artwork blending with the sky. */
 
 @media (prefers-reduced-motion:reduce){
   .gate .wordmark,.enter-in,.hex-in b,.arrived,.gate,.options{animation:none}

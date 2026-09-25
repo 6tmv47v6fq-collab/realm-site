@@ -38,6 +38,8 @@
     R  = Math.hypot(W, H) * 0.6;
     fc.setTransform(SC, 0, 0, SC, 0, 0);
     bc.setTransform(SC, 0, 0, SC, 0, 0);
+    seedStars();
+    if (!puffs.length) seedSmoke();
   }
   window.addEventListener("resize", resize);
 
@@ -111,8 +113,206 @@
     g.stroke();
   }
 
+
+  /* ============================================================
+     THE SKY BEHIND THE GATE
+     Smoke, stars, the occasional falling one, and things that pass.
+     ============================================================ */
+
+  const rand = (a, b) => a + Math.random() * (b - a);
+
+  /* --- stars --- */
+  let stars = [];
+  function seedStars() {
+    stars = [];
+    const n = Math.round((W * H) / 9000);
+    for (let i = 0; i < Math.min(180, n); i++) {
+      stars.push({
+        x: Math.random(), y: Math.random(),
+        r: rand(0.4, 1.5),
+        tw: rand(0.4, 2.2), ph: rand(0, 6.3),
+        hue: rand(180, 300)
+      });
+    }
+  }
+
+  /* --- smoke: slow clouds drifting across --- */
+  const PUFFS = 7;
+  const puffs = [];
+  function seedSmoke() {
+    puffs.length = 0;
+    for (let i = 0; i < PUFFS; i++) {
+      puffs.push({
+        x: Math.random(), y: rand(0.1, 0.95),
+        r: rand(0.26, 0.6),
+        vx: rand(0.004, 0.018) * (Math.random() < 0.5 ? -1 : 1),
+        drift: rand(0, 6.3),
+        hue: rand(250, 300),
+        a: rand(0.13, 0.28)
+      });
+    }
+  }
+
+  /* --- shooting stars --- */
+  const shots = [];
+  let nextShot = 1.2;
+  function fireShot() {
+    const fromLeft = Math.random() < 0.5;
+    shots.push({
+      x: fromLeft ? rand(-0.1, 0.4) : rand(0.6, 1.1),
+      y: rand(-0.05, 0.5),
+      vx: (fromLeft ? 1 : -1) * rand(0.35, 0.62),
+      vy: rand(0.18, 0.4),
+      life: 0, span: rand(0.9, 1.5),
+      hue: rand(170, 290)
+    });
+  }
+
+  /* --- things that pass --- */
+  const ufos = [];
+  let nextUfo = 4;
+  function sendUfo() {
+    const fromLeft = Math.random() < 0.5;
+    ufos.push({
+      x: fromLeft ? -0.16 : 1.16,
+      y: rand(0.08, 0.72),
+      vx: (fromLeft ? 1 : -1) * rand(0.018, 0.045),
+      bob: rand(0, 6.3),
+      size: rand(0.03, 0.062),
+      hue: rand(160, 300),
+      beam: Math.random() < 0.35
+    });
+  }
+
+  function drawUfo(g, u, t) {
+    const x = u.x * W;
+    const y = (u.y + Math.sin(t * 0.8 + u.bob) * 0.012) * H;
+    const w = u.size * W, h = w * 0.3;
+
+    if (u.beam) {                                   // a shaft of light below
+      const bg = g.createLinearGradient(x, y, x, y + h * 9);
+      bg.addColorStop(0, `hsla(${u.hue},100%,70%,0.24)`);
+      bg.addColorStop(1, "hsla(0,0%,0%,0)");
+      g.fillStyle = bg;
+      g.beginPath();
+      g.moveTo(x - w * 0.26, y + h * 0.4);
+      g.lineTo(x + w * 0.26, y + h * 0.4);
+      g.lineTo(x + w * 1.05, y + h * 9);
+      g.lineTo(x - w * 1.05, y + h * 9);
+      g.closePath(); g.fill();
+    }
+
+    const halo = g.createRadialGradient(x, y, 0, x, y, w * 1.5);
+    halo.addColorStop(0, `hsla(${u.hue},100%,70%,0.3)`);
+    halo.addColorStop(1, "hsla(0,0%,0%,0)");
+    g.fillStyle = halo;
+    g.fillRect(x - w * 1.5, y - w * 1.5, w * 3, w * 3);
+
+    g.fillStyle = `hsla(${u.hue},70%,62%,0.85)`;    // hull
+    g.beginPath(); g.ellipse(x, y, w * 0.5, h * 0.5, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = `hsla(${u.hue + 30},100%,82%,0.9)`; // dome
+    g.beginPath(); g.ellipse(x, y - h * 0.34, w * 0.2, h * 0.5, 0, Math.PI, 0); g.fill();
+
+    for (let i = 0; i < 4; i++) {                    // running lights
+      const lx = x - w * 0.3 + i * (w * 0.2);
+      const on = 0.4 + 0.6 * Math.abs(Math.sin(t * 3 + i * 1.3 + u.bob));
+      g.fillStyle = `hsla(${u.hue + i * 40},100%,75%,${on})`;
+      g.beginPath(); g.arc(lx, y + h * 0.3, w * 0.035, 0, Math.PI * 2); g.fill();
+    }
+  }
+
+  function paintAmbient(t, dt) {
+    const g = fc;
+    const lift = phase === "options" ? 1.5 : 1;
+
+    g.setTransform(SC, 0, 0, SC, 0, 0);
+    g.fillStyle = "#000";
+    g.fillRect(0, 0, W, H);
+    g.globalCompositeOperation = "lighter";
+
+    // smoke
+    for (const p of puffs) {
+      p.x += p.vx * dt * 0.001;
+      if (p.x < -0.6) p.x = 1.6; if (p.x > 1.6) p.x = -0.6;
+      const px = p.x * W;
+      const py = (p.y + Math.sin(t * 0.14 + p.drift) * 0.02) * H;
+      const r  = p.r * Math.max(W, H) * (1 + Math.sin(t * 0.1 + p.drift) * 0.08);
+      const grad = g.createRadialGradient(px, py, 0, px, py, r);
+      grad.addColorStop(0,   `hsla(${p.hue},90%,52%,${p.a * lift})`);
+      grad.addColorStop(0.5, `hsla(${p.hue + 40},90%,44%,${p.a * 0.4 * lift})`);
+      grad.addColorStop(1,   "hsla(0,0%,0%,0)");
+      g.fillStyle = grad;
+      g.fillRect(px - r, py - r, r * 2, r * 2);
+    }
+
+    // stars
+    for (const st of stars) {
+      const a = 0.34 + 0.66 * Math.abs(Math.sin(t * st.tw + st.ph));
+      g.fillStyle = `hsla(${st.hue},80%,88%,${a * lift})`;
+      g.beginPath();
+      g.arc(st.x * W, st.y * H, st.r, 0, Math.PI * 2);
+      g.fill();
+    }
+
+    // falling stars
+    nextShot -= dt * 0.001;
+    if (nextShot <= 0) { fireShot(); nextShot = rand(1.1, 3.2); }
+    for (let i = shots.length - 1; i >= 0; i--) {
+      const sh = shots[i];
+      sh.life += dt * 0.001;
+      sh.x += sh.vx * dt * 0.001;
+      sh.y += sh.vy * dt * 0.001;
+      if (sh.life > sh.span) { shots.splice(i, 1); continue; }
+
+      const fade = 1 - sh.life / sh.span;
+      const hx = sh.x * W, hy = sh.y * H;
+      const tx = hx - sh.vx * W * 0.13, ty = hy - sh.vy * H * 0.13;
+      const tail = g.createLinearGradient(hx, hy, tx, ty);
+      tail.addColorStop(0, `hsla(${sh.hue},100%,90%,${0.95 * fade * lift})`);
+      tail.addColorStop(1, "hsla(0,0%,0%,0)");
+      g.strokeStyle = tail;
+      g.lineWidth = 2.2;
+      g.beginPath(); g.moveTo(hx, hy); g.lineTo(tx, ty); g.stroke();
+
+      const head = g.createRadialGradient(hx, hy, 0, hx, hy, 12);
+      head.addColorStop(0, `hsla(${sh.hue},100%,96%,${fade})`);
+      head.addColorStop(1, "hsla(0,0%,0%,0)");
+      g.fillStyle = head;
+      g.fillRect(hx - 12, hy - 12, 24, 24);
+    }
+
+    // passers-by
+    nextUfo -= dt * 0.001;
+    if (nextUfo <= 0 && ufos.length < 2) { sendUfo(); nextUfo = rand(7, 17); }
+    for (let i = ufos.length - 1; i >= 0; i--) {
+      const u = ufos[i];
+      u.x += u.vx * dt * 0.001;
+      if (u.x < -0.3 || u.x > 1.3) { ufos.splice(i, 1); continue; }
+      drawUfo(g, u, t);
+    }
+
+    g.globalCompositeOperation = "source-over";
+
+    // hold the edges down so the being stays the brightest thing here
+    const cx2 = W / 2, cy2 = H / 2, RR = Math.hypot(W, H) * 0.6;
+    const vig = g.createRadialGradient(cx2, cy2, Math.min(W, H) * 0.2, cx2, cy2, RR);
+    vig.addColorStop(0,   "rgba(0,0,0,0)");
+    vig.addColorStop(0.68,"rgba(0,0,0,0.3)");
+    vig.addColorStop(1,   "rgba(0,0,0,0.82)");
+    g.fillStyle = vig;
+    g.fillRect(0, 0, W, H);
+  }
+
   /* ---------- the frame ---------- */
   function paint(t, dt) {
+    if (phase !== "tunnel") {
+      paintAmbient(t, dt);
+      ctx.drawImage(front, 0, 0, W, H);
+      const tf0 = front, tc0 = fc;
+      front = back; fc = bc; back = tf0; bc = tc0;
+      return;
+    }
+
     const g = fc;
 
     // how hard we are pushing right now
