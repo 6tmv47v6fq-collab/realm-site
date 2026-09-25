@@ -4,26 +4,27 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#05030b">
-<title>The Realm — REALM</title>
-<meta name="description" content="Step inside the DMT realm. 111 beings drift in every sector.">
+<title>Inside the Realm — REALM</title>
+<meta name="description" content="Fly through the ten sectors of the DMT realm.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="realm.css">
+<link rel="stylesheet" href="world.css">
 </head>
 <body class="realm-body">
 
-<canvas id="realm"></canvas>
+<canvas id="world"></canvas>
 
-<a class="back" href="index.html" aria-label="Back to the main page">&larr;</a>
+<a class="back" href="realm.html" aria-label="Back">&larr;</a>
 
 <header class="realm-head">
   <h1 id="sector-title">&nbsp;</h1>
   <p id="sector-sub">&nbsp;</p>
 </header>
 
-<a id="world-link" class="lore-btn world-link" href="world.html">Go inside &rarr;</a>
+<button id="drift" class="drift">Move</button>
 <button id="lore-btn" class="lore-btn">Read this sector</button>
 
 <aside id="lore" class="lore-panel">
@@ -36,11 +37,18 @@
 <nav class="strip">
   <p class="strip-label">Sectors</p>
   <div id="sectors"></div>
-  <p class="strip-hint">Tap a being to look at it</p>
+  <p class="strip-hint">Drag to look &middot; tap a being</p>
 </nav>
 
+<div id="fail" class="fail">
+  <h2>The realm won't open</h2>
+  <p></p>
+  <a class="btn ghost" href="realm.html">Open the flat realm instead</a>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="data.js"></script>
 <script src="forms.js"></script>
-<script src="realm.js"></script>
+<script src="world.js"></script>
 </body>
 </html>

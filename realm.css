@@ -41,6 +41,12 @@
   background:rgba(5,3,11,.55);border:1px solid var(--line);backdrop-filter:blur(10px);
 }
 .lore-btn:hover{color:var(--cyan);border-color:var(--cyan)}
+.world-link{
+  text-decoration:none;bottom:calc(190px + env(safe-area-inset-bottom));
+  border-color:var(--gold);color:var(--gold);
+}
+.world-link:hover{color:var(--gold);border-color:var(--gold);box-shadow:0 0 18px rgba(251,191,36,.3)}
+body.picking .world-link{opacity:0;pointer-events:none;transition:opacity .2s}
 /* step aside while a being is open, so the two never overlap */
 body.picking .lore-btn{opacity:0;pointer-events:none;transition:opacity .2s}
 
