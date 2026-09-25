@@ -52,10 +52,19 @@ const server = http.createServer((req, res) => {
       });
       return;
     }
-    const type = TYPES[path.extname(filePath).toLowerCase()] || "application/octet-stream";
+    const ext  = path.extname(filePath).toLowerCase();
+    const type = TYPES[ext] || "application/octet-stream";
+
+    /* Code and pages must never be served stale — otherwise a browser
+       keeps running yesterday's site after a deploy. Images and fonts
+       rarely change under the same name, so those can be cached. */
+    const isCode = [".html", ".css", ".js", ".json", ".txt"].includes(ext);
+
     res.writeHead(200, {
       "Content-Type": type,
-      "Cache-Control": path.extname(filePath) === ".html" ? "no-cache" : "public, max-age=3600"
+      "Cache-Control": isCode
+        ? "no-cache, must-revalidate"
+        : "public, max-age=3600"
     }).end(data);
   });
 });
