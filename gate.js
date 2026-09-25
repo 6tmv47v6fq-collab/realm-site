@@ -218,15 +218,36 @@
 
   /* ---------- the gatekeeper ---------- */
   const keeper = document.getElementById("keeper");
+  let art = null, kc = null, MX = 0, MY = 0;
+
   if (keeper && window.RealmCreature) {
     try {
-      const art = RealmCreature.draw();
+      art = RealmCreature.draw();
       keeper.width = art.width; keeper.height = art.height;
-      keeper.getContext("2d").drawImage(art, 0, 0);
-      // the zoom pulls toward its mouth, not the middle of the picture
-      keeper.style.transformOrigin =
-        `${RealmCreature.MOUTH.x * 100}% ${RealmCreature.MOUTH.y * 100}%`;
+      kc = keeper.getContext("2d");
+      kc.drawImage(art, 0, 0);
+      MX = art.width  * RealmCreature.MOUTH.x;
+      MY = art.height * RealmCreature.MOUTH.y;
     } catch (e) { /* the gate still works without it */ }
+  }
+
+  /* Being swallowed is drawn INSIDE the canvas, at its own fixed size.
+     Scaling the element itself with CSS asks the browser to rasterise a
+     layer thousands of pixels across, which locks a phone up for
+     seconds. Redrawing the baked picture costs the same every frame
+     however far in we are. */
+  function swallow(p) {
+    if (!kc || !art) return;
+    const s = 1 + 15 * p * p * p;
+    kc.setTransform(1, 0, 0, 1, 0, 0);
+    kc.clearRect(0, 0, art.width, art.height);
+    kc.globalAlpha = Math.max(0, 1 - p * p * 1.25);
+    kc.translate(MX, MY);
+    kc.scale(s, s);
+    kc.translate(-MX, -MY);
+    kc.drawImage(art, 0, 0);
+    kc.setTransform(1, 0, 0, 1, 0, 0);
+    kc.globalAlpha = 1;
   }
 
   /* ---------- states ---------- */
@@ -243,9 +264,18 @@
 
   function enter() {
     if (phase !== "gate") return;
-    gate.classList.add("gone");     // the creature rushes at you, mouth first
+    gate.classList.add("gone");
     if (still) { land(); return; }
-    setTimeout(() => { go("tunnel"); }, SWALLOW_MS * 0.55);
+
+    const t0 = performance.now();
+    (function pull(now) {
+      const p = Math.min(1, (now - t0) / SWALLOW_MS);
+      swallow(p);
+      if (p < 1) requestAnimationFrame(pull);
+      else if (gate) gate.style.display = "none";
+    })(t0);
+
+    setTimeout(() => go("tunnel"), SWALLOW_MS * 0.5);
     setTimeout(land, SWALLOW_MS + TUNNEL_MS);
   }
 

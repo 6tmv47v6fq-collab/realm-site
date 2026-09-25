@@ -64,18 +64,13 @@
   50%    {transform:scale(1.022)  ;filter:drop-shadow(0 0 44px rgba(34,211,238,.6))  hue-rotate(22deg)}
 }
 
-/* pulled in through its mouth */
-.gate.gone .keeper{
-  animation:none;
-}
-.gate.gone #keeper{
-  animation:none;
-  transform:scale(15);
-  opacity:0;
-  transition:transform 1.25s cubic-bezier(.6,0,.9,.5),opacity 1.1s ease-in .15s;
-}
+/* pulled in through its mouth — the zoom itself happens inside the
+   canvas, not as a CSS transform, so nothing has to rasterise a
+   layer thousands of pixels wide */
+.gate.gone .keeper{animation:none}
+.gate.gone #keeper{animation:none;filter:none}
 .gate.gone .enter,.gate.gone .creed{
-  opacity:0;transition:opacity .35s;
+  opacity:0;transition:opacity .3s;pointer-events:none;
 }
 
 /* ---------- where you come out ---------- */
