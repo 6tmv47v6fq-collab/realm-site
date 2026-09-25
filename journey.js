@@ -125,6 +125,169 @@ window.RealmJourney = (() => {
     return Math.max(0, Math.min(OPTIONS.length - 1, p));
   }
 
+
+  /* ============================================================
+     WHAT YOU SEE THROUGH EACH GATE
+     Every option shows its own destination, alive, clipped to the
+     morphing shape. You are looking at where you would go.
+     ============================================================ */
+
+  /* data.js declares these with const, so they are globals but not
+     properties of window. Reach them by name, with a fallback. */
+  const g_ = (name, fallback) => {
+    try { return eval(name); } catch (e) { return fallback; }
+  };
+
+  let beings = [];           // baked once, drifting inside the NFTS gate
+  function bakeBeings() {
+    const TIERS = g_("TIERS", null);
+    if (beings.length || !window.RealmForms || !TIERS) return;
+    const keys = ["god", "entity", "mythic", "legendary", "epic", "rare", "uncommon", "common"];
+    beings = keys.map((tier, n) => {
+      const t = TIERS.find(x => x.key === tier);
+      const b = { id: 900 + n, n: n + 1, tier, tierName: t.name, color: t.color };
+      return {
+        img: RealmForms.makeForm(b),
+        x: Math.random(), y: Math.random(),
+        s: 0.1 + (7 - n) * 0.028,
+        vx: (0.02 + Math.random() * 0.05) * (Math.random() < 0.5 ? -1 : 1),
+        vy: (0.01 + Math.random() * 0.03) * (Math.random() < 0.5 ? -1 : 1),
+        ph: Math.random() * 6.3
+      };
+    });
+  }
+
+  const SCENES = {
+
+    /* the counter, ticking over */
+    mint(g, S, t, hue) {
+      const c = S * 0.42, r = S * 0.22;
+      const total  = g_("SUPPLY_PER_ROUND", 111);
+      const cfg = g_("CONFIG", {}); const minted = cfg.minted || 0;
+      const done   = minted / total;
+
+      g.strokeStyle = `hsla(${hue},70%,60%,0.3)`;
+      g.lineWidth = S * 0.035;
+      g.beginPath(); g.arc(c, c, r, 0, Math.PI * 2); g.stroke();
+
+      g.strokeStyle = "#f0d489";
+      g.lineCap = "round";
+      g.beginPath();
+      g.arc(c, c, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(done, 0.008));
+      g.stroke();
+
+      for (let k = 0; k < 36; k++) {           // ticks round the dial
+        const a = (k / 36) * Math.PI * 2 - Math.PI / 2;
+        const on = (k / 36) < done;
+        const r0 = r * 1.16, r1 = r * (on ? 1.3 : 1.24);
+        g.strokeStyle = on ? "#f0d489" : `hsla(${hue},70%,70%,0.28)`;
+        g.lineWidth = 1.6;
+        g.beginPath();
+        g.moveTo(c + Math.cos(a) * r0, c + Math.sin(a) * r0);
+        g.lineTo(c + Math.cos(a) * r1, c + Math.sin(a) * r1);
+        g.stroke();
+      }
+
+      g.textAlign = "center"; g.textBaseline = "middle";
+      g.fillStyle = "#fff";
+      g.font = `800 ${S * 0.15}px Syne, system-ui, sans-serif`;
+      g.fillText(String(minted), c, c - S * 0.03);
+      g.fillStyle = `hsla(${hue},100%,80%,0.85)`;
+      g.font = `500 ${S * 0.055}px 'Space Grotesk', system-ui, sans-serif`;
+      g.fillText("OF " + total + " MINTED", c, c + S * 0.07);
+    },
+
+    /* the ten sectors, turning */
+    map(g, S, t, hue) {
+      const c = S * 0.42, R = S * 0.26;
+      const round = g_("ROUND", 1);
+      g.save(); g.translate(c, c); g.rotate(t * 0.08);
+
+      g.strokeStyle = `hsla(${hue},80%,70%,0.2)`;
+      g.lineWidth = 1;
+      for (let k = 1; k <= 3; k++) {
+        g.beginPath(); g.arc(0, 0, R * (k / 3), 0, Math.PI * 2); g.stroke();
+      }
+
+      for (let i = 0; i < 10; i++) {
+        const f = i / 9;
+        const a = -Math.PI / 2 + f * Math.PI * 2 * 1.35;
+        const rr = R * (1 - f * 0.82);
+        const x = Math.cos(a) * rr, y = Math.sin(a) * rr;
+        const open = i < round;
+        const pulse = 1 + (i === round - 1 ? Math.sin(t * 2.4) * 0.28 : 0);
+
+        g.beginPath(); g.arc(x, y, S * 0.026 * pulse, 0, Math.PI * 2);
+        g.fillStyle = open ? "#f0d489" : `hsla(${hue},40%,60%,0.22)`;
+        g.fill();
+        if (open) {
+          g.strokeStyle = `hsla(${hue},100%,80%,0.6)`;
+          g.lineWidth = 1.4;
+          g.beginPath(); g.arc(x, y, S * 0.045 * pulse, 0, Math.PI * 2); g.stroke();
+        }
+      }
+      g.restore();
+    },
+
+    /* the beings themselves, drifting past */
+    nfts(g, S, t, hue, dt) {
+      bakeBeings();
+      for (const b of beings) {
+        b.x += b.vx * dt; b.y += b.vy * dt;
+        if (b.x < -0.2) b.x = 1.2; if (b.x > 1.2) b.x = -0.2;
+        if (b.y < -0.2) b.y = 1.2; if (b.y > 1.2) b.y = -0.2;
+        const d = S * b.s * (1 + Math.sin(t * 1.2 + b.ph) * 0.1);
+        g.drawImage(b.img, b.x * S - d / 2, b.y * S - d / 2, d, d);
+      }
+    },
+
+    /* a mark, and everything streaming past it */
+    x(g, S, t, hue) {
+      const c = S * 0.42;
+      for (let k = 0; k < 26; k++) {          // the stream
+        const ph = (t * 0.22 + k / 26) % 1;
+        const y  = c + (k % 2 ? 1 : -1) * ((k % 13) / 13) * S * 0.34;
+        const x  = (ph * 1.5 - 0.25) * S;
+        g.strokeStyle = `hsla(${hue + k * 6},100%,72%,${0.5 * Math.sin(ph * Math.PI)})`;
+        g.lineWidth = 1.6;
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x - S * 0.1, y); g.stroke();
+      }
+      const r = S * 0.17 * (1 + Math.sin(t * 1.6) * 0.05);
+      g.strokeStyle = "#fff"; g.lineWidth = S * 0.035; g.lineCap = "round";
+      g.beginPath();
+      g.moveTo(c - r, c - r); g.lineTo(c + r, c + r);
+      g.moveTo(c + r, c - r); g.lineTo(c - r, c + r);
+      g.stroke();
+      g.strokeStyle = `hsla(${hue},100%,72%,0.55)`; g.lineWidth = S * 0.07;
+      g.stroke();
+    },
+
+    /* the story, flowing through */
+    story(g, S, t, hue) {
+      const secs  = g_("SECTORS", []);
+      const round = g_("ROUND", 1);
+      const text = (secs[round - 1] && secs[round - 1].lore) || "";
+      const words = text.split(" ");
+      g.font = `500 ${S * 0.045}px 'Space Grotesk', system-ui, sans-serif`;
+      g.textAlign = "center"; g.textBaseline = "middle";
+
+      const lineH = S * 0.07, perLine = 4;
+      const lines = [];
+      for (let i = 0; i < words.length; i += perLine) lines.push(words.slice(i, i + perLine).join(" "));
+
+      const span = lines.length * lineH;
+      const off  = (t * 26) % span;
+      for (let i = 0; i < lines.length; i++) {
+        const y = S * 0.5 + i * lineH - off + span * 0.5;
+        const yy = ((y % span) + span) % span - span * 0.5 + S * 0.5;
+        const d = Math.abs(yy - S * 0.5) / (S * 0.4);
+        if (d > 1) continue;
+        g.fillStyle = `hsla(${hue},100%,${72 + (1 - d) * 22}%,${(1 - d) * 0.95})`;
+        g.fillText(lines[i], S / 2, yy);
+      }
+    }
+  };
+
   /* ---------- the morphing gate ---------- */
   function drawMorph(p, t) {
     const i  = Math.min(OPTIONS.length - 1, Math.floor(p));
@@ -155,11 +318,28 @@ window.RealmJourney = (() => {
     // lit body
     path(1, 0.02);
     const body = mc.createRadialGradient(c, c, 0, c, c, R);
-    body.addColorStop(0,   `hsla(${hue + 30},100%,64%,0.62)`);
-    body.addColorStop(0.6, `hsla(${hue},100%,44%,0.4)`);
-    body.addColorStop(1,   `hsla(${hue - 30},100%,30%,0.62)`);
+    body.addColorStop(0,   `hsla(${hue + 30},100%,30%,0.72)`);
+    body.addColorStop(0.6, `hsla(${hue},100%,18%,0.82)`);
+    body.addColorStop(1,   `hsla(${hue - 30},100%,10%,0.92)`);
     mc.fillStyle = body;
     mc.fill();
+
+    /* look through it: the destination, alive, clipped to the shape */
+    mc.save();
+    path(0.97, 0.02);
+    mc.clip();
+    const dt = 0.032;
+    const showScene = (o, alpha) => {
+      const fn = SCENES[o.key];
+      if (!fn || alpha <= 0.01) return;
+      mc.save();
+      mc.globalAlpha = alpha;
+      fn(mc, MS, t, o.hue, dt);
+      mc.restore();
+    };
+    showScene(A, 1 - f);
+    showScene(B, f);
+    mc.restore();
 
     // gold rim, doubled for glow
     mc.strokeStyle = `hsla(${hue},100%,62%,0.55)`;
@@ -175,23 +355,36 @@ window.RealmJourney = (() => {
     // the lettering, crossfading as one melts into the next
     const put = (img, alpha) => {
       if (alpha <= 0.01 || !img) return;
-      const maxW = MS * 0.66;
-      const s = Math.min(maxW / img.width, (MS * 0.3) / img.height);
+      const maxW = MS * 0.6;
+      const s = Math.min(maxW / img.width, (MS * 0.22) / img.height);
       const dw = img.width * s, dh = img.height * s;
+      const cy = c + MS * 0.2;                 // below the view, not over it
       const COLS = 26, cw = img.width / COLS;
       mc.globalAlpha = alpha;
       for (let k = 0; k < COLS; k++) {
-        const off = Math.sin(k / COLS * 5.5 + t * 1.6) * (MS * 0.012);
+        const off = Math.sin(k / COLS * 5.5 + t * 1.6) * (MS * 0.011);
         mc.drawImage(img, k * cw, 0, cw + 1, img.height,
-                     c - dw / 2 + k * (dw / COLS), c - dh / 2 + off,
+                     c - dw / 2 + k * (dw / COLS), cy - dh / 2 + off,
                      dw / COLS + 1, dh);
       }
       mc.globalAlpha = 1;
     };
     /* Hand the word over rather than crossfading it: two sets of
        letters sitting on top of each other read as a smudge. */
-    put(labels[i], 1 - Math.min(1, f * 2.3));
-    put(labels[j], Math.max(0, f * 2.3 - 1.3));
+    // a soft band behind the word so it reads over the moving scene
+    const bandA = 1 - Math.min(1, f * 2.3), bandB = Math.max(0, f * 2.3 - 1.3);
+    if (bandA + bandB > 0.02) {
+      const cy = c + MS * 0.2, bh = MS * 0.17;
+      const band = mc.createLinearGradient(0, cy - bh, 0, cy + bh);
+      band.addColorStop(0,   "rgba(4,0,14,0)");
+      band.addColorStop(0.5, `rgba(4,0,14,${0.72 * (bandA + bandB)})`);
+      band.addColorStop(1,   "rgba(4,0,14,0)");
+      mc.save(); path(0.97, 0.02); mc.clip();
+      mc.fillStyle = band; mc.fillRect(0, cy - bh, MS, bh * 2);
+      mc.restore();
+    }
+    put(labels[i], bandA);
+    put(labels[j], bandB);
   }
 
   /* ---------- the geometry behind it ---------- */
@@ -271,7 +464,8 @@ window.RealmJourney = (() => {
     const o = OPTIONS[Math.round(progress())];
     if (o.href) { window.location.href = o.href; return; }
     if (o.link) {
-      const url = (window.CONFIG && CONFIG.links && CONFIG.links[o.link]) || "";
+      const cfg = g_("CONFIG", {});
+      const url = (cfg.links && cfg.links[o.link]) || "";
       if (url) window.open(url, "_blank", "noopener");
       return;
     }
