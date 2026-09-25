@@ -225,11 +225,65 @@
     RealmCreature.load(img => {
       art = img;
       keeper.width = img.naturalWidth; keeper.height = img.naturalHeight;
-      kc.drawImage(img, 0, 0);
       MX = keeper.width  * RealmCreature.MOUTH.x;
       MY = keeper.height * RealmCreature.MOUTH.y;
+      drawKeeper(0, 0);
       keeper.classList.add("ready");
+      if (!still) requestAnimationFrame(ripple);
     }, () => { if (keeper) keeper.style.display = "none"; });
+  }
+
+  /* ---------- the being will not hold still ----------
+     Drawn as a stack of horizontal slices, each slid sideways by its
+     own travelling wave. That is what makes it look like it is seen
+     through moving water rather than simply scaled. */
+  const SLICES = 54;
+
+  function drawKeeper(t, zoom) {
+    if (!kc || !art) return;
+    const w = keeper.width, h = keeper.height;
+    const sh = h / SLICES;
+
+    kc.setTransform(1, 0, 0, 1, 0, 0);
+    kc.clearRect(0, 0, w, h);
+
+    if (zoom > 0) {
+      const s = 1 + 15 * zoom * zoom * zoom;
+      kc.globalAlpha = Math.max(0, 1 - zoom * zoom * 1.25);
+      kc.translate(MX, MY); kc.scale(s, s); kc.translate(-MX, -MY);
+    }
+
+    // the warp eases off as you are pulled in
+    const amp  = (w * 0.015) * (1 - zoom);
+    const roll = (w * 0.006) * (1 - zoom);
+
+    /* Each slice is drawn a little wider than the frame. Without that
+       overscan, a slice sliding sideways leaves a bare strip at the
+       edge of the picture. */
+    const over = amp * 2.2 + roll * 2.2 + 2;
+
+    for (let i = 0; i < SLICES; i++) {
+      const sy = i * sh;
+      const f  = i / SLICES;
+      const dx = Math.sin(f * 7.2 + t * 1.15) * amp
+               + Math.sin(f * 17.5 - t * 0.63) * roll;
+      const dy = Math.sin(f * 4.1 + t * 0.8) * roll * 0.8;
+      kc.drawImage(art, 0, sy, w, sh + 1,
+                   dx - over, sy + dy, w + over * 2, sh + 1);
+    }
+
+    kc.setTransform(1, 0, 0, 1, 0, 0);
+    kc.globalAlpha = 1;
+  }
+
+  let rlast = 0;
+  function ripple(ms) {
+    if (phase !== "gate") return;              // the swallow takes over
+    if (!document.hidden && ms - rlast > 32) { // 30fps is plenty for a drift
+      rlast = ms;
+      drawKeeper(ms * 0.001, 0);
+    }
+    requestAnimationFrame(ripple);
   }
 
   /* Being swallowed is drawn INSIDE the canvas, at its own fixed size.
@@ -237,19 +291,7 @@
      layer thousands of pixels across, which locks a phone up for
      seconds. Redrawing the baked picture costs the same every frame
      however far in we are. */
-  function swallow(p) {
-    if (!kc || !art) return;
-    const s = 1 + 15 * p * p * p;
-    kc.setTransform(1, 0, 0, 1, 0, 0);
-    kc.clearRect(0, 0, keeper.width, keeper.height);
-    kc.globalAlpha = Math.max(0, 1 - p * p * 1.25);
-    kc.translate(MX, MY);
-    kc.scale(s, s);
-    kc.translate(-MX, -MY);
-    kc.drawImage(art, 0, 0);
-    kc.setTransform(1, 0, 0, 1, 0, 0);
-    kc.globalAlpha = 1;
-  }
+  function swallow(p) { drawKeeper(performance.now() * 0.001, p); }
 
   /* ---------- states ---------- */
   const gate    = document.querySelector(".gate");
@@ -285,6 +327,25 @@
     options.hidden = false;
     requestAnimationFrame(() => options.classList.add("here"));
   }
+
+  /* ---------- writing that moves ----------
+     Each letter becomes its own element with its own place in the
+     wave, so the words ripple across instead of animating as a block. */
+  function liquify(el, cls) {
+    if (!el) return;
+    const text = el.textContent;
+    el.textContent = "";
+    [...text].forEach((ch, i) => {
+      const sp = document.createElement("span");
+      sp.className = cls;
+      sp.style.setProperty("--i", i);
+      sp.textContent = ch;
+      if (ch === " ") sp.style.width = ".32em";
+      el.appendChild(sp);
+    });
+  }
+  liquify(document.querySelector(".enter-in"), "ch");
+  liquify(document.querySelector(".creed"), "ch soft");
 
   document.querySelector("#enter").addEventListener("click", enter);
 
