@@ -15,8 +15,8 @@
 .gate{
   position:fixed;inset:0;z-index:10;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:clamp(8px,1.6vh,18px);
-  padding:16px 14px;text-align:center;
+  gap:clamp(4px,1vh,12px);
+  padding:8px 4px 16px;text-align:center;
   transition:opacity .7s ease-in,transform 1s ease-in;
 }
 .gate.gone{opacity:0;transform:none;pointer-events:none;transition:opacity .5s ease-in 1s}
@@ -54,7 +54,7 @@
   display:grid;place-items:center;
 }
 #keeper{
-  max-width:min(94vw,520px);max-height:100%;width:auto;height:auto;
+  max-width:min(112vw,620px);max-height:100%;width:auto;height:auto;
   display:block;
   filter:drop-shadow(0 0 30px rgba(168,85,247,.5));
   animation:keeperBreathe 11s ease-in-out infinite;
