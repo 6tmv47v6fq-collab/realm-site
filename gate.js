@@ -120,7 +120,7 @@
       ? Math.min(1, (performance.now() - phaseAt) / TUNNEL_MS)
       : 0;
 
-    const intensity = phase === "gate"    ? 0.34
+    const intensity = phase === "gate"    ? (gate && gate.classList.contains("gone") ? 0.55 : 0.15)
                     : phase === "options" ? 0.62
                     : 0.75 + rush * 0.9;
 
@@ -178,9 +178,9 @@
 
     // hold the edges down so text stays readable
     const vig = g.createRadialGradient(cx, cy, Math.min(W, H) * 0.12, cx, cy, R);
-    const edge = phase === "gate" ? 0.97 : 0.88;
+    const edge = phase === "gate" ? 0.99 : 0.88;
     vig.addColorStop(0,    "rgba(2,0,8,0)");
-    vig.addColorStop(0.6,  `rgba(2,0,8,${edge * 0.42})`);
+    vig.addColorStop(0.6,  `rgba(2,0,8,${edge * (phase === "gate" ? 0.72 : 0.42)})`);
     vig.addColorStop(1,    `rgba(2,0,8,${edge})`);
     g.fillStyle = vig;
     g.fillRect(0, 0, W, H);
@@ -216,6 +216,19 @@
     }
   }
 
+  /* ---------- the gatekeeper ---------- */
+  const keeper = document.getElementById("keeper");
+  if (keeper && window.RealmCreature) {
+    try {
+      const art = RealmCreature.draw();
+      keeper.width = art.width; keeper.height = art.height;
+      keeper.getContext("2d").drawImage(art, 0, 0);
+      // the zoom pulls toward its mouth, not the middle of the picture
+      keeper.style.transformOrigin =
+        `${RealmCreature.MOUTH.x * 100}% ${RealmCreature.MOUTH.y * 100}%`;
+    } catch (e) { /* the gate still works without it */ }
+  }
+
   /* ---------- states ---------- */
   const gate    = document.querySelector(".gate");
   const options = document.querySelector(".options");
@@ -226,12 +239,14 @@
     document.body.dataset.phase = next;
   }
 
+  const SWALLOW_MS = 1150;          // how long the mouth takes to take you
+
   function enter() {
     if (phase !== "gate") return;
-    go("tunnel");
-    gate.classList.add("gone");
+    gate.classList.add("gone");     // the creature rushes at you, mouth first
     if (still) { land(); return; }
-    setTimeout(land, TUNNEL_MS);
+    setTimeout(() => { go("tunnel"); }, SWALLOW_MS * 0.55);
+    setTimeout(land, SWALLOW_MS + TUNNEL_MS);
   }
 
   function land() {
