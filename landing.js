@@ -116,6 +116,9 @@
 
   $$("[data-open]").forEach(b => b.addEventListener("click", () => show(b.dataset.open)));
 
+  // the journey opens these too
+  window.RealmPanels = { show, hide };
+
   // X is a link when one is configured, and a panel-free no-op otherwise
 
   $$(".panel-close").forEach(b => b.addEventListener("click", hide));

@@ -498,7 +498,7 @@
 
   /* ---------- states ---------- */
   const gate    = document.querySelector(".gate");
-  const options = document.querySelector(".options");
+  const journey = document.querySelector(".journey");
 
   function go(next) {
     phase = next;
@@ -527,8 +527,10 @@
 
   function land() {
     go("options");
-    options.hidden = false;
-    requestAnimationFrame(() => options.classList.add("here"));
+    if (!journey) return;
+    journey.hidden = false;
+    if (window.RealmJourney && RealmJourney.start) RealmJourney.start();
+    requestAnimationFrame(() => journey.classList.add("here"));
   }
 
   /* ---------- writing that moves ----------
