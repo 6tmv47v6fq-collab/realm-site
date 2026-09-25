@@ -120,7 +120,7 @@
       ? Math.min(1, (performance.now() - phaseAt) / TUNNEL_MS)
       : 0;
 
-    const intensity = phase === "gate"    ? (gate && gate.classList.contains("gone") ? 0.55 : 0.15)
+    const intensity = phase === "gate"    ? (gate && gate.classList.contains("gone") ? 0.55 : 0.05)
                     : phase === "options" ? 0.62
                     : 0.75 + rush * 0.9;
 
@@ -138,7 +138,7 @@
     g.setTransform(SC, 0, 0, SC, 0, 0);
 
     // darken what carried over, so trails decay instead of smearing white
-    g.fillStyle = `rgba(2,0,8,${phase === "tunnel" ? 0.1 : 0.2})`;
+    g.fillStyle = `rgba(0,0,0,${phase === "tunnel" ? 0.1 : 0.2})`;
     g.fillRect(0, 0, W, H);
 
     g.globalCompositeOperation = "lighter";
@@ -179,9 +179,9 @@
     // hold the edges down so text stays readable
     const vig = g.createRadialGradient(cx, cy, Math.min(W, H) * 0.12, cx, cy, R);
     const edge = phase === "gate" ? 0.99 : 0.88;
-    vig.addColorStop(0,    "rgba(2,0,8,0)");
-    vig.addColorStop(0.6,  `rgba(2,0,8,${edge * (phase === "gate" ? 0.72 : 0.42)})`);
-    vig.addColorStop(1,    `rgba(2,0,8,${edge})`);
+    vig.addColorStop(0,    "rgba(0,0,0,0)");
+    vig.addColorStop(0.6,  `rgba(0,0,0,${edge * (phase === "gate" ? 0.88 : 0.42)})`);
+    vig.addColorStop(1,    `rgba(0,0,0,${edge})`);
     g.fillStyle = vig;
     g.fillRect(0, 0, W, H);
 
@@ -221,14 +221,15 @@
   let art = null, kc = null, MX = 0, MY = 0;
 
   if (keeper && window.RealmCreature) {
-    try {
-      art = RealmCreature.draw();
-      keeper.width = art.width; keeper.height = art.height;
-      kc = keeper.getContext("2d");
-      kc.drawImage(art, 0, 0);
-      MX = art.width  * RealmCreature.MOUTH.x;
-      MY = art.height * RealmCreature.MOUTH.y;
-    } catch (e) { /* the gate still works without it */ }
+    kc = keeper.getContext("2d");
+    RealmCreature.load(img => {
+      art = img;
+      keeper.width = img.naturalWidth; keeper.height = img.naturalHeight;
+      kc.drawImage(img, 0, 0);
+      MX = keeper.width  * RealmCreature.MOUTH.x;
+      MY = keeper.height * RealmCreature.MOUTH.y;
+      keeper.classList.add("ready");
+    }, () => { if (keeper) keeper.style.display = "none"; });
   }
 
   /* Being swallowed is drawn INSIDE the canvas, at its own fixed size.
@@ -240,7 +241,7 @@
     if (!kc || !art) return;
     const s = 1 + 15 * p * p * p;
     kc.setTransform(1, 0, 0, 1, 0, 0);
-    kc.clearRect(0, 0, art.width, art.height);
+    kc.clearRect(0, 0, keeper.width, keeper.height);
     kc.globalAlpha = Math.max(0, 1 - p * p * 1.25);
     kc.translate(MX, MY);
     kc.scale(s, s);

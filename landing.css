@@ -3,7 +3,7 @@
    ============================================================ */
 
 .landing{
-  margin:0;min-height:100svh;overflow-x:hidden;background:#03010a;
+  margin:0;min-height:100svh;overflow-x:hidden;background:#000;
   -webkit-tap-highlight-color:transparent;
 }
 #sky{
@@ -24,18 +24,21 @@
 /* the one way in */
 .enter{
   position:relative;cursor:pointer;border:0;background:none;padding:0;
-  width:min(66vw,260px);aspect-ratio:1/.62;
+  width:min(56vw,224px);aspect-ratio:1/.56;
   clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
   transition:transform .3s;
 }
 .enter::before{
   content:'';position:absolute;inset:0;
-  background:conic-gradient(from 0deg,#22d3ee,#a855f7,#e879f9,#fbbf24,#34d399,#22d3ee);
-  animation:turnGate 7s linear infinite;
+  background:conic-gradient(from 0deg,
+    #e3ba5c,#f7e3a1,#8b5cf6,#22d3ee,#a855f7,#e3ba5c);
+  animation:turnGate 9s linear infinite;
 }
 .enter::after{
   content:'';position:absolute;inset:3px;
-  background:radial-gradient(circle at 50% 50%,rgba(60,10,110,.6),rgba(2,0,8,.94) 68%);
+  background:
+    radial-gradient(circle at 50% 46%,rgba(109,40,217,.62),rgba(20,6,46,.95) 70%),
+    #0a0320;
   clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
 }
 @keyframes turnGate{to{transform:rotate(360deg)}}
@@ -50,18 +53,22 @@
 
 /* the gatekeeper */
 .keeper{
-  position:relative;flex:1 1 auto;min-height:0;width:100%;
-  display:grid;place-items:center;
+  position:relative;flex:0 1 auto;min-height:0;width:100%;
+  display:grid;place-items:center;margin-bottom:0;
 }
 #keeper{
-  max-width:min(112vw,620px);max-height:100%;width:auto;height:auto;
-  display:block;
-  filter:drop-shadow(0 0 30px rgba(168,85,247,.5));
-  animation:keeperBreathe 11s ease-in-out infinite;
+  max-width:min(104vw,600px);max-height:100%;width:auto;height:auto;
+  display:block;opacity:0;transition:opacity .8s ease-out;
+  filter:drop-shadow(0 0 46px rgba(139,92,246,.5));
+  animation:keeperBreathe 13s ease-in-out infinite;
+  /* the art is on black — feather it so it never reads as a pasted box */
+  -webkit-mask-image:radial-gradient(ellipse 88% 86% at 50% 48%,#000 72%,transparent 99%);
+          mask-image:radial-gradient(ellipse 88% 86% at 50% 48%,#000 72%,transparent 99%);
 }
+#keeper.ready{opacity:1}
 @keyframes keeperBreathe{
-  0%,100%{transform:scale(1)      ;filter:drop-shadow(0 0 26px rgba(168,85,247,.45)) hue-rotate(0deg)}
-  50%    {transform:scale(1.022)  ;filter:drop-shadow(0 0 44px rgba(34,211,238,.6))  hue-rotate(22deg)}
+  0%,100%{transform:scale(1)    ;filter:drop-shadow(0 0 30px rgba(139,92,246,.5))}
+  50%    {transform:scale(1.018);filter:drop-shadow(0 0 52px rgba(34,211,238,.55))}
 }
 
 /* pulled in through its mouth — the zoom itself happens inside the
@@ -100,7 +107,7 @@
 }
 
 .creed{
-  margin:0;color:#cfc6e6;font-size:.84rem;letter-spacing:.2em;line-height:1.9;
+  margin:0;color:#b5a6d8;font-size:.84rem;letter-spacing:.2em;line-height:1.9;
   text-transform:uppercase;
   text-shadow:0 0 14px #03010a,0 0 30px #03010a;
 }
@@ -250,13 +257,12 @@
 }
 
 .enter-in{
-  letter-spacing:.12em;
+  letter-spacing:.14em;color:#f7e9c8;
   animation:fringe 3.4s ease-in-out infinite;
 }
 @keyframes fringe{
-  0%,100%{text-shadow:-2px 0 #22d3ee, 2px 0 #e879f9, 0 0 22px #a855f7}
-  33%    {text-shadow: 2px 1px #fbbf24,-2px -1px #22d3ee, 0 0 30px #e879f9}
-  66%    {text-shadow:-1px 2px #34d399, 1px -2px #e879f9, 0 0 26px #22d3ee}
+  0%,100%{text-shadow:-1.5px 0 #22d3ee, 1.5px 0 #a855f7, 0 0 24px #e3ba5c}
+  50%    {text-shadow: 1.5px 0 #e3ba5c,-1.5px 0 #22d3ee, 0 0 30px #a855f7}
 }
 
 .hex-in b{
