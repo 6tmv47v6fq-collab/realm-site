@@ -11,16 +11,60 @@
   display:block;pointer-events:none;
 }
 
-/* ---------- the gate ---------- */
+/* ---------- the door ---------- */
 .gate{
-  position:relative;min-height:100svh;
+  position:fixed;inset:0;z-index:10;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:clamp(12px,2.4vh,22px);
+  gap:clamp(20px,4vh,40px);
+  padding:24px 16px;text-align:center;
+  transition:opacity .7s ease-in,transform 1s ease-in;
+}
+.gate.gone{opacity:0;transform:scale(2.6);pointer-events:none}
+
+/* the one way in */
+.enter{
+  position:relative;cursor:pointer;border:0;background:none;padding:0;
+  width:min(74vw,300px);aspect-ratio:1/.88;
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  transition:transform .3s;
+}
+.enter::before{
+  content:'';position:absolute;inset:0;
+  background:conic-gradient(from 0deg,#22d3ee,#a855f7,#e879f9,#fbbf24,#34d399,#22d3ee);
+  animation:turnGate 7s linear infinite;
+}
+.enter::after{
+  content:'';position:absolute;inset:3px;
+  background:radial-gradient(circle at 50% 50%,rgba(60,10,110,.6),rgba(2,0,8,.94) 68%);
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+}
+@keyframes turnGate{to{transform:rotate(360deg)}}
+.enter-in{
+  position:absolute;inset:0;z-index:2;display:grid;place-items:center;padding:0 14%;
+  font-family:'Cinzel',serif;font-weight:700;
+  font-size:clamp(1rem,5.2vw,1.45rem);letter-spacing:.16em;text-transform:uppercase;color:#fff;
+  text-shadow:0 0 16px #a855f7,0 0 40px #22d3ee;
+}
+.enter:hover{transform:scale(1.04)}
+.enter:active{transform:scale(.96)}
+
+/* ---------- where you come out ---------- */
+.options{
+  position:fixed;inset:0;z-index:10;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:clamp(12px,2.6vh,22px);
   padding:max(20px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom));
   text-align:center;
+  opacity:0;transform:scale(.86);transition:opacity .9s ease-out,transform .9s ease-out;
+}
+.options[hidden]{display:none}
+.options.here{opacity:1;transform:none}
+.arrived{
+  margin:0;font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.34em;
+  text-transform:uppercase;color:#b9aee0;
 }
 
-.wordmark{
+.gate .wordmark{
   margin:0;font-family:'Cinzel',serif;font-weight:700;
   font-size:clamp(3rem,17vw,6.5rem);letter-spacing:.16em;line-height:1;
   background:linear-gradient(96deg,#fff,#22d3ee,#e879f9,#fbbf24,#34d399,#fff);
@@ -39,8 +83,8 @@
 /* ---------- hexagonal gates ---------- */
 .hexes{
   display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:clamp(11px,3.2vw,20px);
-  width:min(100%,400px);margin-top:clamp(4px,1.4vh,14px);
+  gap:clamp(10px,3vw,18px);
+  width:min(100%,400px);
 }
 
 .hex{
@@ -90,17 +134,20 @@
 }
 
 /* each gate its own colour */
-.hex:nth-child(1){--h:45}
+.hex:nth-child(1){--h:305}
 .hex:nth-child(2){--h:190}
-.hex:nth-child(3){--h:305}
-.hex:nth-child(4){--h:270}
+.hex:nth-child(3){--h:270}
+.hex:nth-child(4){--h:45}
 .hex:nth-child(5){--h:150}
-.hex:nth-child(6){--h:15}
 
-/* the way in burns brightest */
-.hex.go::before{animation-duration:3.4s}
-.hex.go .hex-in b{font-size:clamp(.95rem,4.6vw,1.3rem)}
-.hex.go{filter:drop-shadow(0 0 18px hsl(45 100% 55% / .75))}
+/* the story runs the full width under the other four */
+.hex.wide{
+  grid-column:1 / -1;aspect-ratio:auto;min-height:74px;
+  clip-path:polygon(7% 0%,93% 0%,100% 50%,93% 100%,7% 100%,0% 50%);
+}
+.hex.wide::after{clip-path:polygon(7% 0%,93% 0%,100% 50%,93% 100%,7% 100%,0% 50%)}
+
+
 
 .landing .round-flag{
   margin:0;font-size:.68rem;letter-spacing:.24em;text-transform:uppercase;
@@ -149,8 +196,8 @@
 .panel-close:hover{border-color:#22d3ee;color:#22d3ee}
 
 @media (min-width:560px){
-  .hexes{grid-template-columns:repeat(3,minmax(0,1fr));width:min(100%,620px)}
+  .hexes{grid-template-columns:repeat(4,minmax(0,1fr));width:min(100%,720px)}
 }
 @media (prefers-reduced-motion:reduce){
-  .wordmark,.panel h2,.hex::before,.landing .round-flag{animation:none}
+  .gate .wordmark,.panel h2,.hex::before,.enter::before,.landing .round-flag{animation:none}
 }

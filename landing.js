@@ -115,6 +115,9 @@
   }
 
   $$("[data-open]").forEach(b => b.addEventListener("click", () => show(b.dataset.open)));
+
+  // X is a link when one is configured, and a panel-free no-op otherwise
+
   $$(".panel-close").forEach(b => b.addEventListener("click", hide));
 
   document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); });

@@ -18,41 +18,37 @@
 
 <canvas id="sky" aria-hidden="true"></canvas>
 
+<!-- the door -->
 <main class="gate">
   <h1 class="wordmark">REALM</h1>
-  <p class="creed">10 sectors &middot; 1,110 beings<br>the realm opens one sector at a time</p>
+  <button id="enter" class="enter" type="button">
+    <span class="enter-in">Enter the realm</span>
+  </button>
+  <p class="creed">10 sectors &middot; 1,110 beings</p>
+</main>
 
-  <nav class="hexes">
-    <a class="hex go" href="world.html">
-      <span class="hex-in"><b>ENTER</b><i>step inside</i></span>
-    </a>
-    <a class="hex" href="realm.html">
-      <span class="hex-in"><b>THE MAP</b><i>all 111</i></span>
-    </a>
+<!-- where you come out -->
+<nav class="options" hidden>
+  <p class="arrived">You are through</p>
+  <div class="hexes">
     <button class="hex" type="button" data-open="mint">
       <span class="hex-in"><b>MINT</b><i data-round-label></i></span>
     </button>
-    <button class="hex" type="button" data-open="rarity">
-      <span class="hex-in"><b>RARITY</b><i>8 tiers</i></span>
+    <a class="hex" href="realm.html">
+      <span class="hex-in"><b>MAP</b><i>ten sectors</i></span>
+    </a>
+    <button class="hex" type="button" data-open="nfts">
+      <span class="hex-in"><b>NFTS</b><i>the beings</i></span>
     </button>
-    <button class="hex" type="button" data-open="rewards">
-      <span class="hex-in"><b>REWARDS</b><i>who earns</i></span>
+    <a class="hex" data-link="x" href="#">
+      <span class="hex-in"><b>X</b><i>follow</i></span>
+    </a>
+    <button class="hex wide" type="button" data-open="lore">
+      <span class="hex-in"><b>THE STORY SO FAR</b><i>round <span data-round></span> of 10</i></span>
     </button>
-    <button class="hex" type="button" data-open="lore">
-      <span class="hex-in"><b>LORE</b><i>the story</i></span>
-    </button>
-  </nav>
-
-  <p class="round-flag">Round <span data-round></span> of 10 &middot; <span data-sector-name></span></p>
-
-  <p class="minor">
-    <button type="button" data-open="rounds">Rounds</button>
-    <button type="button" data-open="faq">FAQ</button>
-    <a data-link="x" href="#">X</a>
-    <a data-link="telegram" href="#">Telegram</a>
-    <a data-link="marketplace" href="#">Market</a>
-  </p>
-</main>
+  </div>
+  <p class="round-flag"><span data-sector-name></span> is open</p>
+</nav>
 
 <!-- overlay panels -->
 <section class="panel" id="p-mint" hidden>
@@ -78,12 +74,14 @@
   </div>
 </section>
 
-<section class="panel" id="p-rarity" hidden>
+<section class="panel" id="p-nfts" hidden>
   <button class="panel-close" aria-label="Close">&times;</button>
   <div class="panel-in">
-    <h2>Rarity</h2>
+    <h2>The Beings</h2>
     <p class="lede">Every round holds 111 beings across eight tiers. Only ten Gods will ever exist — one per sector.</p>
     <div class="tiers"></div>
+    <a class="btn primary wide" href="world.html">See them in the realm</a>
+    <p class="fine">Fly through the sector they live in.</p>
   </div>
 </section>
 
@@ -146,7 +144,7 @@
   </div>
 </section>
 
-<script src="sky.js"></script>
+<script src="gate.js"></script>
 <script src="data.js"></script>
 <script src="landing.js"></script>
 </body>
