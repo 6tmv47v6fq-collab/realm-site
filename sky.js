@@ -1,9 +1,9 @@
 /* ============================================================
-   REALM — the living sky behind the homepage.
+   REALM — the opening.
 
-   A slow kaleidoscope that drifts through the whole spectrum, drawn
-   at half size and capped to 30 frames a second so it costs almost
-   nothing on a phone. Nothing here needs editing.
+   A kaleidoscopic tunnel rushing outward through the whole spectrum.
+   Drawn at half size so it stays smooth on a phone.
+   Nothing here needs editing.
    ============================================================ */
 
 (() => {
@@ -13,9 +13,9 @@
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
   const bg  = document.createElement("canvas");
-  const bgc = bg.getContext("2d");
+  const g   = bg.getContext("2d");
 
-  let W = 0, H = 0;
+  let W = 0, H = 0, R = 0, cx = 0, cy = 0;
 
   function resize() {
     W = window.innerWidth;
@@ -24,99 +24,103 @@
     canvas.height = H;
     bg.width  = Math.max(1, Math.floor(W / 2));
     bg.height = Math.max(1, Math.floor(H / 2));
+    cx = W / 2; cy = H / 2;
+    R  = Math.hypot(W, H) * 0.62;
   }
   window.addEventListener("resize", resize);
 
+  const TUNNEL = 16;   // rings rushing outward
+  const SYM    = 12;   // mirrored wedges
+
   function paint(t) {
-    const g = bgc;
     g.setTransform(0.5, 0, 0, 0.5, 0, 0);
-    g.fillStyle = "#04020a";
+    g.fillStyle = "#03010a";
     g.fillRect(0, 0, W, H);
-
-    const cx = W / 2, cy = H * 0.42, R = Math.max(W, H);
-    const hue = t * 9;
-
     g.globalCompositeOperation = "lighter";
 
-    // drifting colour fields
-    for (let k = 0; k < 3; k++) {
-      const a  = t * (0.08 + k * 0.05) + k * 2.1;
-      const px = cx + Math.cos(a) * W * 0.4;
-      const py = cy + Math.sin(a * 0.8) * H * 0.3;
-      const grad = g.createRadialGradient(px, py, 0, px, py, R * 0.55);
-      const h = hue + k * 115;
-      grad.addColorStop(0,    `hsla(${h},100%,58%,0.17)`);
-      grad.addColorStop(0.45, `hsla(${h + 50},100%,52%,0.07)`);
-      grad.addColorStop(1,    "hsla(0,0%,0%,0)");
-      g.fillStyle = grad;
-      g.fillRect(0, 0, W, H);
-    }
+    const hue = t * 26;
 
-    // mirrored spokes
-    const SYM = 14;
+    /* ---- the tunnel: polygons racing out of the centre ---- */
     g.save();
     g.translate(cx, cy);
-    g.rotate(t * 0.035);
-    for (let i = 0; i < SYM; i++) {
-      g.rotate((Math.PI * 2) / SYM);
-      g.beginPath();
-      for (let k = 0; k < 8; k++) {
-        const rr = R * (0.06 + k * 0.08) + Math.sin(t * 0.5 + k * 1.2) * 30;
-        const sp = 0.11 + Math.sin(t * 0.3 + k) * 0.06;
-        g.moveTo(Math.cos(-sp) * rr, Math.sin(-sp) * rr);
-        g.lineTo(Math.cos(sp) * rr, Math.sin(sp) * rr);
-      }
-      g.strokeStyle = `hsla(${hue + i * 26},100%,66%,0.26)`;
-      g.lineWidth = 1.6;
-      g.stroke();
-    }
-    g.restore();
+    const z = (t * 0.22) % 1;
+    for (let k = 0; k < TUNNEL; k++) {
+      const f  = ((k / TUNNEL) + z) % 1;      // 0 at the centre, 1 at the rim
+      const rr = Math.pow(f, 2.1) * R * 1.5;
+      if (rr < 2) continue;
 
-    // breathing sacred geometry
-    g.save();
-    g.translate(cx, cy);
-    g.rotate(-t * 0.045);
-    for (let k = 0; k < 6; k++) {
-      const rr = Math.min(W, H) * (0.13 + k * 0.095) + Math.sin(t * 0.55 + k) * 11;
+      const fade  = Math.min(1, f * 3) * (1 - f) * 1.7;
       const sides = 6 + (k % 3);
+      const spin  = t * 0.16 * (k % 2 ? 1 : -1) + k * 0.4;
+
+      g.save();
+      g.rotate(spin);
       g.beginPath();
       for (let i = 0; i <= sides; i++) {
-        const a = (i / sides) * Math.PI * 2 + k * 0.3;
+        const a = (i / sides) * Math.PI * 2;
         i ? g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr)
           : g.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
       }
-      g.strokeStyle = `hsla(${hue + 140 + k * 38},100%,70%,0.3)`;
-      g.lineWidth = 1.2;
+      g.strokeStyle = `hsla(${hue + k * 31},100%,66%,${0.78 * fade})`;
+      g.lineWidth = 1 + f * 4.5;
+      g.stroke();
+      g.restore();
+    }
+    g.restore();
+
+    /* ---- mirrored wedges of moving colour ---- */
+    g.save();
+    g.translate(cx, cy);
+    g.rotate(t * 0.05);
+    for (let i = 0; i < SYM; i++) {
+      g.rotate((Math.PI * 2) / SYM);
+      g.beginPath();
+      for (let k = 0; k < 9; k++) {
+        const rr = R * (0.06 + k * 0.1) + Math.sin(t * 0.7 + k * 1.1) * 34;
+        const sp = 0.1 + Math.sin(t * 0.42 + k) * 0.07;
+        g.moveTo(Math.cos(-sp) * rr, Math.sin(-sp) * rr);
+        g.lineTo(Math.cos(sp) * rr, Math.sin(sp) * rr);
+      }
+      g.strokeStyle = `hsla(${hue + i * 30 + 120},100%,70%,0.42)`;
+      g.lineWidth = 1.8;
       g.stroke();
     }
     g.restore();
 
+    /* ---- the burning centre ---- */
+    const core = g.createRadialGradient(cx, cy, 0, cx, cy, R * 0.42);
+    core.addColorStop(0,    `hsla(${hue + 60},100%,86%,0.5)`);
+    core.addColorStop(0.18, `hsla(${hue},100%,62%,0.26)`);
+    core.addColorStop(0.55, `hsla(${hue + 180},100%,52%,0.09)`);
+    core.addColorStop(1,    "hsla(0,0%,0%,0)");
+    g.fillStyle = core;
+    g.fillRect(0, 0, W, H);
+
     g.globalCompositeOperation = "source-over";
 
-    // hold the edges down to black so text stays readable
-    const vig = g.createRadialGradient(cx, cy, Math.min(W, H) * 0.2, cx, cy, R * 0.75);
-    vig.addColorStop(0, "rgba(4,2,10,0)");
-    vig.addColorStop(1, "rgba(4,2,10,0.93)");
+    /* ---- hold the edges to black so the buttons read ---- */
+    const vig = g.createRadialGradient(cx, cy, Math.min(W, H) * 0.13, cx, cy, R);
+    vig.addColorStop(0,    "rgba(3,1,10,0)");
+    vig.addColorStop(0.62, "rgba(3,1,10,0.3)");
+    vig.addColorStop(1,    "rgba(3,1,10,0.88)");
     g.fillStyle = vig;
     g.fillRect(0, 0, W, H);
 
     ctx.drawImage(bg, 0, 0, W, H);
   }
 
-  const slow = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let last = 0;
 
   function loop(ms) {
-    if (!document.hidden) {
-      if (ms - last > 33) {            // 30fps is plenty for a backdrop
-        last = ms;
-        paint(ms * 0.001);
-      }
+    if (!document.hidden && ms - last > 26) {
+      last = ms;
+      paint(ms * 0.001);
     }
     requestAnimationFrame(loop);
   }
 
   resize();
   paint(0);
-  if (!slow) requestAnimationFrame(loop);
+  if (!still) requestAnimationFrame(loop);
 })();

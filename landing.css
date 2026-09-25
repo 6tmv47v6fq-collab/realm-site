@@ -1,0 +1,156 @@
+/* ============================================================
+   REALM — the landing page. One screen, six gates.
+   ============================================================ */
+
+.landing{
+  margin:0;min-height:100svh;overflow-x:hidden;background:#03010a;
+  -webkit-tap-highlight-color:transparent;
+}
+#sky{
+  position:fixed;inset:0;z-index:-1;width:100%;height:100%;
+  display:block;pointer-events:none;
+}
+
+/* ---------- the gate ---------- */
+.gate{
+  position:relative;min-height:100svh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:clamp(12px,2.4vh,22px);
+  padding:max(20px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom));
+  text-align:center;
+}
+
+.wordmark{
+  margin:0;font-family:'Cinzel',serif;font-weight:700;
+  font-size:clamp(3rem,17vw,6.5rem);letter-spacing:.16em;line-height:1;
+  background:linear-gradient(96deg,#fff,#22d3ee,#e879f9,#fbbf24,#34d399,#fff);
+  background-size:320% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:slide 6s linear infinite;
+  filter:drop-shadow(0 0 26px rgba(168,85,247,.9)) drop-shadow(0 0 60px rgba(34,211,238,.55));
+}
+
+.creed{
+  margin:0;color:#cfc6e6;font-size:.84rem;letter-spacing:.2em;line-height:1.9;
+  text-transform:uppercase;
+  text-shadow:0 0 14px #03010a,0 0 30px #03010a;
+}
+
+/* ---------- hexagonal gates ---------- */
+.hexes{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:clamp(11px,3.2vw,20px);
+  width:min(100%,400px);margin-top:clamp(4px,1.4vh,14px);
+}
+
+.hex{
+  position:relative;display:block;width:100%;aspect-ratio:1/.84;
+  padding:0;border:0;background:none;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;color:inherit;
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  transition:transform .22s;
+}
+.hex:active{transform:scale(.95)}
+.hex{filter:drop-shadow(0 0 14px hsl(var(--h,275) 100% 55% / .55))}
+
+/* the coloured face */
+.hex::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(150deg,
+    hsl(var(--h,275) 100% 62% / .95),
+    hsl(calc(var(--h,275) + 60) 100% 56% / .75) 52%,
+    hsl(calc(var(--h,275) + 130) 100% 60% / .9));
+  background-size:220% 220%;
+  animation:drift 7s ease-in-out infinite alternate;
+}
+/* the inner cut, leaving a thick glowing rim */
+.hex::after{
+  content:'';position:absolute;inset:4px;
+  background:
+    radial-gradient(circle at 50% 46%,
+      hsl(var(--h,275) 100% 50% / .42), hsl(var(--h,275) 100% 30% / .2) 58%, transparent 78%),
+    rgba(3,1,10,.7);
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+}
+@keyframes drift{to{background-position:100% 100%}}
+
+.hex-in{
+  position:absolute;inset:0;z-index:2;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  padding:0 10%;
+}
+.hex-in b{
+  font-family:'Cinzel',serif;font-weight:700;
+  font-size:clamp(.82rem,3.9vw,1.12rem);letter-spacing:.14em;color:#fff;
+  text-shadow:0 0 14px hsl(var(--h,275) 100% 62%),0 0 30px hsl(var(--h,275) 100% 55%);
+}
+.hex-in i{
+  font-style:normal;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;
+  color:#cdc3e4;text-shadow:0 0 10px #03010a;
+}
+
+/* each gate its own colour */
+.hex:nth-child(1){--h:45}
+.hex:nth-child(2){--h:190}
+.hex:nth-child(3){--h:305}
+.hex:nth-child(4){--h:270}
+.hex:nth-child(5){--h:150}
+.hex:nth-child(6){--h:15}
+
+/* the way in burns brightest */
+.hex.go::before{animation-duration:3.4s}
+.hex.go .hex-in b{font-size:clamp(.95rem,4.6vw,1.3rem)}
+.hex.go{filter:drop-shadow(0 0 18px hsl(45 100% 55% / .75))}
+
+.landing .round-flag{
+  margin:0;font-size:.68rem;letter-spacing:.24em;text-transform:uppercase;
+  background:linear-gradient(90deg,#fbbf24,#e879f9,#22d3ee,#fbbf24);
+  background-size:300% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:slide 8s linear infinite;
+}
+
+.minor{
+  display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin:0;
+}
+.minor a,.minor button{
+  background:none;border:0;padding:0;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;font-size:.68rem;letter-spacing:.16em;
+  text-transform:uppercase;color:#8d84a8;text-decoration:none;
+}
+.minor a:hover,.minor button:hover{color:#22d3ee}
+
+/* ---------- overlay panels ---------- */
+.panel{
+  position:fixed;inset:0;z-index:40;overflow-y:auto;
+  background:rgba(3,1,10,.93);backdrop-filter:blur(18px);
+  padding:max(58px,calc(env(safe-area-inset-top) + 58px)) 16px
+          max(40px,calc(env(safe-area-inset-bottom) + 40px));
+  animation:rise .26s ease-out;
+}
+.panel[hidden]{display:none}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+.panel-in{max-width:620px;margin:0 auto}
+.panel h2{
+  font-family:'Cinzel',serif;font-size:1.5rem;margin:0 0 8px;
+  letter-spacing:.16em;text-transform:uppercase;
+  background:linear-gradient(90deg,#22d3ee,#a855f7,#e879f9,#fbbf24,#22d3ee);
+  background-size:300% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:slide 9s linear infinite;
+}
+.panel-close{
+  position:fixed;top:max(14px,env(safe-area-inset-top));right:14px;z-index:41;
+  width:44px;height:44px;border-radius:50%;cursor:pointer;
+  font-size:1.6rem;line-height:1;color:#ece7f7;
+  background:rgba(3,1,10,.7);border:1px solid rgba(168,85,247,.5);
+}
+.panel-close:hover{border-color:#22d3ee;color:#22d3ee}
+
+@media (min-width:560px){
+  .hexes{grid-template-columns:repeat(3,minmax(0,1fr));width:min(100%,620px)}
+}
+@media (prefers-reduced-motion:reduce){
+  .wordmark,.panel h2,.hex::before,.landing .round-flag{animation:none}
+}
