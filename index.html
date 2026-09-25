@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>REALM — 10 Sectors of the DMT Realm</title>
+<meta name="description" content="REALM. 10 sectors. 1,110 beings. The realm opens one sector at a time.">
+<meta property="og:title" content="REALM">
+<meta property="og:description" content="10 sectors. 1,110 beings. The realm opens one sector at a time.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="aura" aria-hidden="true"></div>
+
+<header class="nav">
+  <a class="brand" href="#top">REALM</a>
+  <nav>
+    <a href="#map">Map</a>
+    <a href="#mint">Mint</a>
+    <a href="#rarity">Rarity</a>
+    <a href="#lore">Lore</a>
+  </nav>
+</header>
+
+<!-- ───────────────────────── HERO ───────────────────────── -->
+<section id="top" class="hero">
+  <svg class="portal" viewBox="0 0 300 300" aria-hidden="true">
+    <defs>
+      <radialGradient id="core" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#fff" stop-opacity=".95"/>
+        <stop offset="35%" stop-color="var(--cyan)" stop-opacity=".55"/>
+        <stop offset="70%" stop-color="var(--violet)" stop-opacity=".25"/>
+        <stop offset="100%" stop-color="transparent"/>
+      </radialGradient>
+    </defs>
+    <circle cx="150" cy="150" r="96" fill="url(#core)"/>
+    <g class="spin-slow" stroke="var(--violet)" fill="none" stroke-width="1" opacity=".75">
+      <circle cx="150" cy="150" r="118"/>
+      <polygon points="150,42 244,205 56,205"/>
+      <polygon points="150,258 56,95 244,95"/>
+    </g>
+    <g class="spin-fast" stroke="var(--cyan)" fill="none" stroke-width=".8" opacity=".6">
+      <circle cx="150" cy="150" r="138" stroke-dasharray="3 9"/>
+      <rect x="62" y="62" width="176" height="176"/>
+      <rect x="62" y="62" width="176" height="176" transform="rotate(45 150 150)"/>
+    </g>
+    <g class="spin-rev" stroke="var(--gold)" fill="none" stroke-width=".7" opacity=".5">
+      <circle cx="150" cy="150" r="72" stroke-dasharray="2 6"/>
+      <polygon points="150,78 212,114 212,186 150,222 88,186 88,114"/>
+    </g>
+  </svg>
+
+  <h1>REALM</h1>
+  <p class="tagline">10 sectors. 1,110 beings.<br>The realm opens one sector at a time.</p>
+  <div class="cta">
+    <a class="btn primary" href="#mint">Enter the Realm</a>
+    <a class="btn ghost" href="#map">See the Map</a>
+  </div>
+  <p class="round-flag">Round <span data-round></span> of 10 &middot; <span data-sector-name></span></p>
+</section>
+
+<!-- ───────────────────────── MAP ───────────────────────── -->
+<section id="map" class="section">
+  <h2>The Map</h2>
+  <p class="lede">Each round tears open one more sector. Sealed sectors stay dark until their round begins.</p>
+
+  <svg class="realm-map" viewBox="0 0 420 420" role="img" aria-label="Map of the ten sectors">
+    <g class="grid" stroke="var(--violet)" fill="none" opacity=".16">
+      <circle cx="210" cy="210" r="196"/>
+      <circle cx="210" cy="210" r="150"/>
+      <circle cx="210" cy="210" r="104"/>
+      <circle cx="210" cy="210" r="58"/>
+    </g>
+    <polyline class="spiral" points="" fill="none" stroke="var(--cyan)" stroke-width="1.1" opacity=".38" stroke-dasharray="4 7"/>
+    <g class="nodes"></g>
+  </svg>
+
+  <div class="sector-panel" id="sector-panel">
+    <p class="hint">Tap a sector to read it.</p>
+  </div>
+</section>
+
+<!-- ───────────────────────── MINT ───────────────────────── -->
+<section id="mint" class="section">
+  <h2>Mint</h2>
+
+  <div class="mint-card">
+    <div class="mint-head">
+      <span class="pill">Round <span data-round></span></span>
+      <span class="pill soft" data-sector-name></span>
+    </div>
+
+    <div class="bar"><div class="bar-fill" data-bar></div></div>
+    <p class="bar-label"><span data-minted></span> / <span data-supply></span> minted</p>
+
+    <div class="qty">
+      <button type="button" class="step" data-step="-1" aria-label="Fewer">−</button>
+      <span class="qty-num" data-qty>1</span>
+      <button type="button" class="step" data-step="1" aria-label="More">+</button>
+    </div>
+    <p class="limit">Max 3 per wallet</p>
+
+    <a class="btn primary wide" data-mint-btn href="#">Mint</a>
+    <p class="fine" data-mint-note></p>
+  </div>
+</section>
+
+<!-- ───────────────────────── RARITY ───────────────────────── -->
+<section id="rarity" class="section">
+  <h2>Rarity</h2>
+  <p class="lede">Every round holds 111 beings, split across eight tiers. Only ten Gods will ever exist — one per sector.</p>
+  <div class="tiers"></div>
+</section>
+
+<!-- ───────────────────────── REWARDS ───────────────────────── -->
+<section id="rewards" class="section">
+  <h2>Rewards</h2>
+  <div class="cards">
+    <article class="card">
+      <h3>Sector Share</h3>
+      <p>Higher tiers — Epic and above — hold a share of the revenue flowing through their sector. The rarer the being, the deeper the channel.</p>
+    </article>
+    <article class="card">
+      <h3>The Witnesses</h3>
+      <p>Each round, a set of Commons and Uncommons is chosen as Witnesses. They saw what happened, so they are paid for it. No being is worthless here.</p>
+    </article>
+    <article class="card">
+      <h3>The Pilgrim Bonus</h3>
+      <p>Hold beings from several sectors and you walk the realm rather than camp in it. Pilgrims earn an increasing bonus with every new sector they hold.</p>
+    </article>
+  </div>
+  <p class="disclaimer">Nothing here is a promise of profit. REALM is an art and community project. Rewards depend on activity that may not happen.</p>
+</section>
+
+<!-- ───────────────────────── LORE ───────────────────────── -->
+<section id="lore" class="section">
+  <h2>Lore</h2>
+  <p class="lede">The story is told one sector at a time. Sealed chapters stay sealed.</p>
+  <div class="chapters"></div>
+</section>
+
+<!-- ───────────────────────── ROADMAP ───────────────────────── -->
+<section id="roadmap" class="section">
+  <h2>Rounds</h2>
+  <ol class="timeline"></ol>
+</section>
+
+<!-- ───────────────────────── FAQ ───────────────────────── -->
+<section id="faq" class="section">
+  <h2>FAQ</h2>
+
+  <details><summary>How many NFTs are there in total?</summary>
+    <p>1,110. Ten rounds of 111, one sector per round.</p></details>
+
+  <details><summary>How many can I mint?</summary>
+    <p>Three per wallet, per round.</p></details>
+
+  <details><summary>What chain is REALM on?</summary>
+    <p>Solana. You'll need a Solana wallet such as Phantom, Solflare or Backpack, and some SOL for the mint and network fees.</p></details>
+
+  <details><summary>Do I know which tier I'm getting?</summary>
+    <p>No. Every being stays sealed until the round finishes and the reveal happens. That keeps the rare tiers fair.</p></details>
+
+  <details><summary>Are the common ones worthless?</summary>
+    <p>No. Commons and Uncommons can be chosen as Witnesses each round, and they carry the story of their sector.</p></details>
+
+  <details><summary>What happens after round 10?</summary>
+    <p>The map is complete, the Source opens, and the collection closes forever. No round 11.</p></details>
+</section>
+
+<footer>
+  <p class="mark">REALM</p>
+  <p class="links">
+    <a data-link="x" href="#">X</a>
+    <a data-link="telegram" href="#">Telegram</a>
+    <a data-link="marketplace" href="#">Marketplace</a>
+  </p>
+  <p class="fine">Not financial advice. Mint responsibly.</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

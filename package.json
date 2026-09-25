@@ -1,0 +1,12 @@
+{
+  "name": "realm-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "REALM — 10 sectors of the DMT realm. Static site, zero dependencies.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
