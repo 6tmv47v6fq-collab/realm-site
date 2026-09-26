@@ -35,20 +35,19 @@
   <p class="terms">Solana &middot; 3 per wallet &middot; sealed until reveal</p>
 </main>
 
-<!-- where you come out: the journey -->
+<!-- where you come out: the chamber -->
 <div class="journey" hidden>
-  <canvas id="geo" aria-hidden="true"></canvas>
+  <canvas id="chamber" aria-hidden="true"></canvas>
 
-  <div class="j-stops"></div>
+  <div class="j-frame">
+    <p class="j-where"></p>
+    <nav class="j-menu" aria-label="The realm"></nav>
+    <nav class="j-more">
+      <button type="button" data-open="rounds">Rounds</button>
+      <button type="button" data-open="faq">FAQ</button>
+    </nav>
+  </div>
 
-  <canvas id="morph" aria-label="Choose"></canvas>
-  <p class="j-sub"></p>
-  <div class="j-dots"></div>
-  <nav class="j-more">
-    <button type="button" data-open="rounds">Rounds</button>
-    <button type="button" data-open="faq">FAQ</button>
-  </nav>
-  <p class="j-hint">scroll &darr;</p>
   <button id="j-back" class="j-back" type="button" aria-label="Back to the door">&larr;</button>
   <nav class="j-social"></nav>
 </div>

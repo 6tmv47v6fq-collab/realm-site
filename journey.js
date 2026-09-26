@@ -1,84 +1,29 @@
 /* ============================================================
-   REALM — the journey.
+   REALM — the chamber.
 
-   The menu is not a grid of buttons. It is one shape that never
-   stops existing: scroll and it melts from one option into the next,
-   carrying its colour, its lettering and the geometry behind it.
+   Where you come out of the tunnel. One room, five ways on.
 
-   The options themselves are defined in OPTIONS below.
+   The room is a still picture, so everything that makes it feel
+   inhabited is drawn over it: the light in the eyes and the doorway
+   breathes, the floor moves like water, beings drift between the
+   spires, and the whole room pushes very slowly in and out as though
+   you were standing in it rather than looking at it.
+
+   The options themselves are in OPTIONS below.
    ============================================================ */
 
 window.RealmJourney = (() => {
   "use strict";
 
   const OPTIONS = [
-    { key: "mint",    label: "MINT",        kind: "hex",     hue: 288, panel: "mint" },
-    { key: "map",     label: "THE MAP",     kind: "diamond", hue: 196, href: "realm.html" },
-    { key: "beings",  label: "THE BEINGS",  kind: "bloom",   hue: 268, panel: "nfts" },
-    { key: "rewards", label: "REWARDS",     kind: "star",    hue: 44,  panel: "rewards" },
-    { key: "lore",    label: "LORE",        kind: "circle",  hue: 152, panel: "lore" }
+    { key: "mint",    label: "MINT",       panel: "mint" },
+    { key: "map",     label: "THE MAP",    href:  "realm.html" },
+    { key: "beings",  label: "THE BEINGS", panel: "nfts" },
+    { key: "rewards", label: "REWARDS",    panel: "rewards" },
+    { key: "lore",    label: "LORE",       panel: "lore" }
   ];
 
-  /* ---------- shapes, as a radius for any angle ----------
-     Describing every shape this way means morphing between them is
-     just averaging two numbers. */
-  function radius(kind, a) {
-    const poly = n => {
-      const step = Math.PI * 2 / n;
-      const h = ((a % step) + step) % step - step / 2;
-      return Math.cos(step / 2) / Math.cos(h);
-    };
-    switch (kind) {
-      case "hex":     return poly(6);
-      case "diamond": return poly(4);
-      case "circle":  return 1;
-      case "star":    return 0.62 + 0.38 * Math.abs(Math.cos(a * 4));
-      case "bloom":   return 0.82 + 0.18 * Math.cos(a * 6) + 0.06 * Math.cos(a * 12);
-      default:        return 1;
-    }
-  }
-
-  const lerp  = (a, b, t) => a + (b - a) * t;
-  const ease  = t => t * t * (3 - 2 * t);
-
-  /* ---------- liquid lettering ----------
-     Baked flat, then warped column by column as it is drawn, so the
-     words flow like the lettering in the artwork. */
-  function bakeLabel(text, hue) {
-    const pad = 46, size = 96;
-    const m = document.createElement("canvas").getContext("2d");
-    m.font = `800 ${size}px Syne, system-ui, sans-serif`;
-    const w = Math.ceil(m.measureText(text).width) + pad * 2;
-    const h = size + pad * 2;
-
-    const cv = document.createElement("canvas");
-    cv.width = w; cv.height = h;
-    const g = cv.getContext("2d");
-    g.font = `800 ${size}px Syne, system-ui, sans-serif`;
-    g.textAlign = "center";
-    g.textBaseline = "middle";
-    g.lineJoin = "round";
-
-    const x = w / 2, y = h / 2;
-
-    g.strokeStyle = `hsla(${hue},100%,60%,0.5)`;   // outer bloom
-    g.lineWidth = 26; g.strokeText(text, x, y);
-    g.strokeStyle = "#f0d489";                      // gold rim
-    g.lineWidth = 13; g.strokeText(text, x, y);
-    g.strokeStyle = "#2a0f4d";
-    g.lineWidth = 6;  g.strokeText(text, x, y);
-
-    const fillGrad = g.createLinearGradient(0, y - size / 2, 0, y + size / 2);
-    fillGrad.addColorStop(0,   "#ffffff");
-    fillGrad.addColorStop(0.4, `hsl(${hue},100%,82%)`);
-    fillGrad.addColorStop(1,   `hsl(${hue + 30},100%,64%)`);
-    g.fillStyle = fillGrad;
-    g.fillText(text, x, y);
-
-    return cv;
-  }
-
-  return { OPTIONS, radius, lerp, ease, bakeLabel };
+  return { OPTIONS };
 })();
 
 
@@ -87,50 +32,12 @@ window.RealmJourney = (() => {
 
   const wrap = document.querySelector(".journey");
   if (!wrap) return;
+  const cv = document.getElementById("chamber");
+  if (!cv) return;
 
-  const { OPTIONS, radius, lerp, ease, bakeLabel } = window.RealmJourney;
-  const geo   = document.getElementById("geo");
-  const morph = document.getElementById("morph");
-  if (!geo || !morph) return;
-
-  const gc = geo.getContext("2d");
-  const mc = morph.getContext("2d");
-
-  let W = 0, H = 0, MS = 0, labels = [];
+  const { OPTIONS } = window.RealmJourney;
+  const ctx  = cv.getContext("2d");
   const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    W = window.innerWidth; H = window.innerHeight;
-
-    geo.width  = Math.floor(W * 0.5);
-    geo.height = Math.floor(H * 0.5);
-    gc.setTransform(0.5, 0, 0, 0.5, 0, 0);
-
-    MS = Math.min(W * 0.82, H * 0.42, 380);
-    morph.style.width  = MS + "px";
-    morph.style.height = MS + "px";
-    morph.width  = Math.floor(MS * dpr);
-    morph.height = Math.floor(MS * dpr);
-    mc.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-  window.addEventListener("resize", resize);
-
-  /* ---------- where we are in the journey ---------- */
-  function progress() {
-    const stops = document.querySelectorAll(".stop");
-    if (!stops.length) return 0;
-    const step = stops[0].getBoundingClientRect().height || H;
-    const p = wrap.scrollTop / step;
-    return Math.max(0, Math.min(OPTIONS.length - 1, p));
-  }
-
-
-  /* ============================================================
-     WHAT YOU SEE THROUGH EACH GATE
-     Every option shows its own destination, alive, clipped to the
-     morphing shape. You are looking at where you would go.
-     ============================================================ */
 
   /* data.js declares these with const, so they are globals but not
      properties of window. Reach them by name, with a fallback. */
@@ -138,413 +45,377 @@ window.RealmJourney = (() => {
     try { return eval(name); } catch (e) { return fallback; }
   };
 
-  let beings = [];           // baked once, drifting inside the NFTS gate
+  /* ---------- the room ----------
+     Landmarks are fractions of the picture, measured off the artwork,
+     so the light lands on the right things at any size. */
+  const EYE_HIGH = { x: 0.500, y: 0.094 };   // the eye above the apex
+  const EYE_BIG  = { x: 0.500, y: 0.358 };   // the eye in the pyramid
+  const DOOR     = { x: 0.500, y: 0.655 };   // the lit doorway at the end
+  const FLOOR    = 0.735;                     // where the floor begins
+
+  let art = null;
+  let W = 0, H = 0, DPR = 1;
+
+  const rand = (a, b) => a + Math.random() * (b - a);
+
+  /* ---------- loading, small picture on small screens ---------- */
+  (function loadRoom() {
+    const img = new Image();
+    img.decoding = "async";
+    img.onload = () => { art = img; resize(); };
+    img.src = (window.innerWidth <= 700 || (window.devicePixelRatio || 1) < 2)
+      ? "chamber-small.jpg" : "chamber.jpg";
+  })();
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width  = Math.max(1, Math.round(W * DPR));
+    cv.height = Math.max(1, Math.round(H * DPR));
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    bakeOverlay();
+    seedMotes();
+  }
+
+  /* The two washes that hold the room back never change, and filling
+     the whole screen with a gradient twice a frame is the single most
+     expensive thing here. So they are painted once and stamped. */
+  let overlay = null;
+  function bakeOverlay() {
+    const ow = Math.max(2, Math.round(W / 3)), oh = Math.max(2, Math.round(H / 3));
+    overlay = document.createElement("canvas");
+    overlay.width = ow; overlay.height = oh;
+    const g = overlay.getContext("2d");
+
+    const vig = g.createRadialGradient(ow / 2, oh * 0.45, Math.min(ow, oh) * 0.2,
+                                       ow / 2, oh * 0.45, Math.hypot(ow, oh) * 0.62);
+    vig.addColorStop(0,   "rgba(3,1,10,0)");
+    vig.addColorStop(0.7, "rgba(3,1,10,0.35)");
+    vig.addColorStop(1,   "rgba(3,1,10,0.88)");
+    g.fillStyle = vig;
+    g.fillRect(0, 0, ow, oh);
+
+    const scrim = g.createLinearGradient(0, oh * 0.30, 0, oh);
+    scrim.addColorStop(0,    "rgba(3,1,10,0)");
+    scrim.addColorStop(0.42, "rgba(3,1,10,0.42)");
+    scrim.addColorStop(0.72, "rgba(3,1,10,0.76)");
+    scrim.addColorStop(1,    "rgba(3,1,10,0.9)");
+    g.fillStyle = scrim;
+    g.fillRect(0, oh * 0.30, ow, oh * 0.70);
+  }
+  window.addEventListener("resize", resize);
+
+  /* ---------- where the room sits ----------
+     Always full bleed: whatever the shape of the screen, the picture
+     covers it. What is then chosen is which part you are standing in
+     front of — the eye in the pyramid is held high, above the words,
+     and the picture is slid no further than its own edges allow. */
+  function frame(zoom, sway) {
+    const cover = Math.max(W / art.width, H / art.height) * zoom;
+    const w = art.width * cover, h = art.height * cover;
+    let y = H * 0.30 - h * EYE_BIG.y;
+    if (y > 0)     y = 0;
+    if (y < H - h) y = H - h;
+    // drift sideways, but never far enough to show an edge
+    const room = Math.max(0, (w - W) / 2);
+    const x = (W - w) / 2 + sway * Math.min(room, W * 0.02);
+    return { x, y, w, h };
+  }
+
+  /* ---------- dust in the air ---------- */
+  let motes = [];
+  function seedMotes() {
+    motes = [];
+    const n = Math.min(60, Math.round((W * H) / 16000));
+    for (let i = 0; i < n; i++) {
+      motes.push({
+        x: Math.random(), y: Math.random(),
+        r: rand(0.5, 1.9),
+        vy: rand(0.006, 0.026),
+        drift: rand(0, 6.3),
+        hue: rand(178, 300),
+        tw: rand(0.5, 2.1)
+      });
+    }
+  }
+
+  /* ---------- the things that live here ----------
+     The beings are the ones from the collection, drawn small and lit
+     from within, drifting between the spires. */
+  let beings = [];
   function bakeBeings() {
     const TIERS = g_("TIERS", null);
     if (beings.length || !window.RealmForms || !TIERS) return;
-    const keys = ["god", "entity", "mythic", "legendary", "epic", "rare", "uncommon", "common"];
+    const keys = ["god", "entity", "mythic", "legendary", "epic", "rare", "uncommon"];
     beings = keys.map((tier, n) => {
       const t = TIERS.find(x => x.key === tier);
-      const b = { id: 900 + n, n: n + 1, tier, tierName: t.name, color: t.color };
+      if (!t) return null;
       return {
-        img: RealmForms.makeForm(b),
-        x: Math.random(), y: Math.random(),
-        s: 0.1 + (7 - n) * 0.028,
-        vx: (0.02 + Math.random() * 0.05) * (Math.random() < 0.5 ? -1 : 1),
-        vy: (0.01 + Math.random() * 0.03) * (Math.random() < 0.5 ? -1 : 1),
-        ph: Math.random() * 6.3
+        img: RealmForms.makeForm({ id: 700 + n, n: n + 1, tier, tierName: t.name, color: t.color }),
+        x: rand(0.08, 0.92), y: rand(0.16, 0.66),
+        vx: rand(0.004, 0.017) * (Math.random() < 0.5 ? -1 : 1),
+        vy: rand(0.002, 0.009) * (Math.random() < 0.5 ? -1 : 1),
+        s:  rand(0.045, 0.1),
+        ph: rand(0, 6.3),
+        a:  rand(0.3, 0.62)
       };
-    });
+    }).filter(Boolean);
   }
 
-  const SCENES = {
+  /* a pocket of dark for a being to stand in, painted once */
+  let pocketCv = null;
+  function pocket() {
+    if (pocketCv) return pocketCv;
+    pocketCv = document.createElement("canvas");
+    pocketCv.width = pocketCv.height = 72;
+    const g = pocketCv.getContext("2d");
+    const r = g.createRadialGradient(36, 36, 0, 36, 36, 36);
+    r.addColorStop(0,    "rgba(3,1,10,0.8)");
+    r.addColorStop(0.55, "rgba(3,1,10,0.45)");
+    r.addColorStop(1,    "rgba(3,1,10,0)");
+    g.fillStyle = r;
+    g.fillRect(0, 0, 72, 72);
+    return pocketCv;
+  }
 
-    /* the counter, ticking over */
-    mint(g, S, t, hue) {
-      const c = S * 0.42, r = S * 0.22;
-      const total  = g_("SUPPLY_PER_ROUND", 111);
-      const cfg = g_("CONFIG", {}); const minted = cfg.minted || 0;
-      const done   = minted / total;
+  /* ---------- light ---------- */
+  function glow(x, y, r, hue, a, light) {
+    if (a <= 0.004 || r <= 0) return;
+    if (x + r < 0 || x - r > W || y + r < 0 || y - r > H) return;   // off-screen
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0,    `hsla(${hue},100%,${light || 78}%,${a})`);
+    g.addColorStop(0.38, `hsla(${hue},100%,62%,${a * 0.34})`);
+    g.addColorStop(1,    "hsla(0,0%,0%,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
 
-      g.strokeStyle = `hsla(${hue},70%,60%,0.3)`;
-      g.lineWidth = S * 0.035;
-      g.beginPath(); g.arc(c, c, r, 0, Math.PI * 2); g.stroke();
+  /* ---------- one frame ---------- */
+  let ringT = 0;
 
-      g.strokeStyle = "#f0d489";
-      g.lineCap = "round";
-      g.beginPath();
-      g.arc(c, c, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(done, 0.008));
-      g.stroke();
+  function paint(t, dt) {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.fillStyle = "#03010a";
+    ctx.fillRect(0, 0, W, H);
+    if (!art) return;
 
-      for (let k = 0; k < 36; k++) {           // ticks round the dial
-        const a = (k / 36) * Math.PI * 2 - Math.PI / 2;
-        const on = (k / 36) < done;
-        const r0 = r * 1.16, r1 = r * (on ? 1.3 : 1.24);
-        g.strokeStyle = on ? "#f0d489" : `hsla(${hue},70%,70%,0.28)`;
-        g.lineWidth = 1.6;
-        g.beginPath();
-        g.moveTo(c + Math.cos(a) * r0, c + Math.sin(a) * r0);
-        g.lineTo(c + Math.cos(a) * r1, c + Math.sin(a) * r1);
-        g.stroke();
-      }
+    /* the room breathes: a slow push in and out, so standing here
+       never feels like looking at a photograph */
+    const zoom = 1 + 0.035 * (0.5 + 0.5 * Math.sin(t * 0.12));
+    const { x, y, w, h } = frame(zoom, Math.sin(t * 0.055));
 
-      g.textAlign = "center"; g.textBaseline = "middle";
-      g.fillStyle = "#fff";
-      g.font = `800 ${S * 0.15}px Syne, system-ui, sans-serif`;
-      g.fillText(String(minted), c, c - S * 0.03);
-      g.fillStyle = `hsla(${hue},100%,80%,0.85)`;
-      g.font = `500 ${S * 0.055}px 'Space Grotesk', system-ui, sans-serif`;
-      g.fillText("OF " + total + " MINTED", c, c + S * 0.07);
-    },
+    ctx.drawImage(art, x, y, w, h);
 
-    /* the ten sectors, turning */
-    map(g, S, t, hue) {
-      const c = S * 0.42, R = S * 0.26;
-      const round = g_("ROUND", 1);
-      g.save(); g.translate(c, c); g.rotate(t * 0.08);
-
-      g.strokeStyle = `hsla(${hue},80%,70%,0.2)`;
-      g.lineWidth = 1;
-      for (let k = 1; k <= 3; k++) {
-        g.beginPath(); g.arc(0, 0, R * (k / 3), 0, Math.PI * 2); g.stroke();
-      }
-
-      for (let i = 0; i < 10; i++) {
-        const f = i / 9;
-        const a = -Math.PI / 2 + f * Math.PI * 2 * 1.35;
-        const rr = R * (1 - f * 0.82);
-        const x = Math.cos(a) * rr, y = Math.sin(a) * rr;
-        const open = i < round;
-        const pulse = 1 + (i === round - 1 ? Math.sin(t * 2.4) * 0.28 : 0);
-
-        g.beginPath(); g.arc(x, y, S * 0.026 * pulse, 0, Math.PI * 2);
-        g.fillStyle = open ? "#f0d489" : `hsla(${hue},40%,60%,0.22)`;
-        g.fill();
-        if (open) {
-          g.strokeStyle = `hsla(${hue},100%,80%,0.6)`;
-          g.lineWidth = 1.4;
-          g.beginPath(); g.arc(x, y, S * 0.045 * pulse, 0, Math.PI * 2); g.stroke();
-        }
-      }
-      g.restore();
-    },
-
-    /* the beings themselves, drifting past */
-    beings(g, S, t, hue, dt) {
-      bakeBeings();
-      for (const b of beings) {
-        b.x += b.vx * dt; b.y += b.vy * dt;
-        if (b.x < -0.2) b.x = 1.2; if (b.x > 1.2) b.x = -0.2;
-        if (b.y < -0.2) b.y = 1.2; if (b.y > 1.2) b.y = -0.2;
-        const d = S * b.s * (1 + Math.sin(t * 1.2 + b.ph) * 0.1);
-        g.drawImage(b.img, b.x * S - d / 2, b.y * S - d / 2, d, d);
-      }
-    },
-
-    /* who the rewards reach: the many, the few, the wanderers */
-    rewards(g, S, t, hue) {
-      const c = S * 0.42, R = S * 0.24;
-
-      /* three rings: the many on the outside, the few at the centre,
-         and a thread crossing between them */
-      const counts = [18, 7, 1];
-      for (let ring = 0; ring < 3; ring++) {
-        const rr = R * (1 - ring * 0.34);
-        const n  = counts[ring];
-        g.strokeStyle = `hsla(${hue + ring * 26},90%,68%,0.22)`;
-        g.lineWidth = 1;
-        g.beginPath(); g.arc(c, c, rr, 0, Math.PI * 2); g.stroke();
-
-        for (let k = 0; k < n; k++) {
-          const a = (k / n) * Math.PI * 2 + t * (0.1 - ring * 0.05) * (ring % 2 ? -1 : 1);
-          const x = c + Math.cos(a) * rr, y = c + Math.sin(a) * rr;
-          const lit = 0.45 + 0.55 * Math.abs(Math.sin(t * 1.4 + k * 0.7 + ring));
-          g.fillStyle = ring === 2 ? "#f0d489" : `hsla(${hue + ring * 30},100%,74%,${lit})`;
-          g.beginPath();
-          g.arc(x, y, S * (ring === 2 ? 0.03 : 0.016) * (ring === 2 ? 1 + Math.sin(t * 2) * 0.12 : 1), 0, Math.PI * 2);
-          g.fill();
-        }
-      }
-
-      // the pilgrim's thread, crossing sectors
-      g.strokeStyle = `hsla(${hue + 60},100%,80%,0.5)`;
-      g.lineWidth = 1.3;
-      g.beginPath();
-      for (let k = 0; k <= 40; k++) {
-        const a = (k / 40) * Math.PI * 4 + t * 0.3;
-        const rr = R * (0.2 + (k / 40) * 0.8);
-        const x = c + Math.cos(a) * rr, y = c + Math.sin(a) * rr;
-        k ? g.lineTo(x, y) : g.moveTo(x, y);
-      }
-      g.stroke();
-    },
-
-    /* the story, flowing through */
-    lore(g, S, t, hue) {
-      const secs  = g_("SECTORS", []);
-      const round = g_("ROUND", 1);
-      const text = (secs[round - 1] && secs[round - 1].lore) || "";
-      const words = text.split(" ");
-      g.font = `500 ${S * 0.045}px 'Space Grotesk', system-ui, sans-serif`;
-      g.textAlign = "center"; g.textBaseline = "middle";
-
-      const lineH = S * 0.07, perLine = 4;
-      const lines = [];
-      for (let i = 0; i < words.length; i += perLine) lines.push(words.slice(i, i + perLine).join(" "));
-
-      const span = lines.length * lineH;
-      const off  = (t * 26) % span;
-      for (let i = 0; i < lines.length; i++) {
-        const y = S * 0.5 + i * lineH - off + span * 0.5;
-        const yy = ((y % span) + span) % span - span * 0.5 + S * 0.5;
-        const d = Math.abs(yy - S * 0.5) / (S * 0.4);
-        if (d > 1) continue;
-        g.fillStyle = `hsla(${hue},100%,${72 + (1 - d) * 22}%,${(1 - d) * 0.95})`;
-        g.fillText(lines[i], S / 2, yy);
-      }
+    /* ---------- the floor moves like water ----------
+       Only the rows below FLOOR, each slid sideways by its own slow
+       wave, further the nearer it is. Drawn a little wider than the
+       picture so a sliding row never shows its edge. */
+    const N = 18;
+    const y0 = FLOOR, span = 1 - FLOOR;
+    const srcH = art.height * span / N;
+    const dstH = h * span / N;
+    for (let i = 0; i < N; i++) {
+      const dy = y + h * y0 + i * dstH;
+      if (dy + dstH < 0 || dy > H) continue;       // that row is off-screen
+      const f = i / N;                              // 0 far, 1 near
+      const amp = w * 0.0065 * Math.pow(f, 1.7);
+      const off = Math.sin(f * 6.2 - t * 0.85) * amp
+                + Math.sin(f * 13.0 - t * 0.41) * amp * 0.4;
+      const over = amp * 2.4 + 1;
+      ctx.drawImage(art,
+        0, art.height * y0 + i * srcH, art.width, srcH + 2,
+        x + off - over, dy, w + over * 2, dstH + 2);
     }
-  };
 
-  /* ---------- the morphing gate ---------- */
-  function drawMorph(p, t) {
-    const i  = Math.min(OPTIONS.length - 1, Math.floor(p));
-    const j  = Math.min(OPTIONS.length - 1, i + 1);
-    const f  = ease(p - i);
-    const A  = OPTIONS[i], B = OPTIONS[j];
-    const hue = lerp(A.hue, B.hue < A.hue - 180 ? B.hue + 360 : B.hue, f);
+    /* ---------- everything that gives off light ---------- */
+    ctx.globalCompositeOperation = "lighter";
 
-    const c = MS / 2, R = MS * 0.42;
-    mc.setTransform(mc.getTransform().a, 0, 0, mc.getTransform().d, 0, 0);
-    mc.clearRect(0, 0, MS, MS);
+    const P  = { x: x + w * DOOR.x,     y: y + h * DOOR.y };
+    const E1 = { x: x + w * EYE_BIG.x,  y: y + h * EYE_BIG.y };
+    const E2 = { x: x + w * EYE_HIGH.x, y: y + h * EYE_HIGH.y };
 
-    // the shape, as one path sampled all the way round
-    const path = (scale, wob) => {
-      mc.beginPath();
-      const N = 140;
-      for (let k = 0; k <= N; k++) {
-        const a = (k / N) * Math.PI * 2 - Math.PI / 2;
-        let r = lerp(radius(A.kind, a), radius(B.kind, a), f);
-        r *= 1 + Math.sin(a * 3 + t * 1.1) * wob + Math.sin(a * 7 - t * 0.7) * wob * 0.5;
-        const x = c + Math.cos(a) * r * R * scale;
-        const y = c + Math.sin(a) * r * R * scale;
-        k ? mc.lineTo(x, y) : mc.moveTo(x, y);
-      }
-      mc.closePath();
-    };
+    // the doorway at the end of the hall
+    const door = 0.3 + 0.16 * Math.sin(t * 0.63) + 0.06 * Math.sin(t * 1.7);
+    glow(P.x, P.y, w * 0.30, 44, door * 0.5, 86);
+    glow(P.x, P.y, w * 0.11, 52, door, 95);
 
-    // lit body
-    path(1, 0.02);
-    const body = mc.createRadialGradient(c, c, 0, c, c, R);
-    body.addColorStop(0,   `hsla(${hue + 30},100%,30%,0.72)`);
-    body.addColorStop(0.6, `hsla(${hue},100%,18%,0.82)`);
-    body.addColorStop(1,   `hsla(${hue - 30},100%,10%,0.92)`);
-    mc.fillStyle = body;
-    mc.fill();
-
-    /* look through it: the destination, alive, clipped to the shape */
-    mc.save();
-    path(0.97, 0.02);
-    mc.clip();
-    const dt = 0.032;
-    const showScene = (o, alpha) => {
-      const fn = SCENES[o.key];
-      if (!fn || alpha <= 0.01) return;
-      mc.save();
-      mc.globalAlpha = alpha;
-      fn(mc, MS, t, o.hue, dt);
-      mc.restore();
-    };
-    showScene(A, 1 - f);
-    showScene(B, f);
-    mc.restore();
-
-    // gold rim, doubled for glow
-    mc.strokeStyle = `hsla(${hue},100%,62%,0.55)`;
-    mc.lineWidth = 12; mc.stroke();
-    mc.strokeStyle = "#f0d489";
-    mc.lineWidth = 3.2; mc.stroke();
-
-    // an inner echo, turning the other way
-    path(0.74, -0.03);
-    mc.strokeStyle = `hsla(${hue + 60},100%,76%,0.5)`;
-    mc.lineWidth = 1.6; mc.stroke();
-
-    // the lettering, crossfading as one melts into the next
-    const put = (img, alpha) => {
-      if (alpha <= 0.01 || !img) return;
-      const maxW = MS * 0.6;
-      const s = Math.min(maxW / img.width, (MS * 0.22) / img.height);
-      const dw = img.width * s, dh = img.height * s;
-      const cy = c + MS * 0.2;                 // below the view, not over it
-      const COLS = 26, cw = img.width / COLS;
-      mc.globalAlpha = alpha;
-      for (let k = 0; k < COLS; k++) {
-        const off = Math.sin(k / COLS * 5.5 + t * 1.6) * (MS * 0.011);
-        mc.drawImage(img, k * cw, 0, cw + 1, img.height,
-                     c - dw / 2 + k * (dw / COLS), cy - dh / 2 + off,
-                     dw / COLS + 1, dh);
-      }
-      mc.globalAlpha = 1;
-    };
-    /* Hand the word over rather than crossfading it: two sets of
-       letters sitting on top of each other read as a smudge. */
-    // a soft band behind the word so it reads over the moving scene
-    const bandA = 1 - Math.min(1, f * 2.3), bandB = Math.max(0, f * 2.3 - 1.3);
-    if (bandA + bandB > 0.02) {
-      const cy = c + MS * 0.2, bh = MS * 0.17;
-      const band = mc.createLinearGradient(0, cy - bh, 0, cy + bh);
-      band.addColorStop(0,   "rgba(4,0,14,0)");
-      band.addColorStop(0.5, `rgba(4,0,14,${0.72 * (bandA + bandB)})`);
-      band.addColorStop(1,   "rgba(4,0,14,0)");
-      mc.save(); path(0.97, 0.02); mc.clip();
-      mc.fillStyle = band; mc.fillRect(0, cy - bh, MS, bh * 2);
-      mc.restore();
+    // light spilling out of it along the floor
+    if (P.y < H && y + h > P.y) {
+      const spill = ctx.createLinearGradient(P.x, P.y, P.x, y + h);
+      spill.addColorStop(0, `hsla(44,100%,76%,${0.2 * door})`);
+      spill.addColorStop(1, "hsla(0,0%,0%,0)");
+      ctx.fillStyle = spill;
+      ctx.fillRect(Math.max(x, 0), P.y, Math.min(w, W), Math.min(y + h, H) - P.y);
     }
-    put(labels[i], bandA);
-    put(labels[j], bandB);
-  }
 
-  /* ---------- the geometry behind it ---------- */
-  function drawGeo(p, t) {
-    const i = Math.min(OPTIONS.length - 1, Math.floor(p));
-    const j = Math.min(OPTIONS.length - 1, i + 1);
-    const f = ease(p - i);
-    const A = OPTIONS[i], B = OPTIONS[j];
-    const hue = lerp(A.hue, B.hue < A.hue - 180 ? B.hue + 360 : B.hue, f);
+    // the two eyes, awake at their own pace
+    glow(E1.x, E1.y, w * 0.115, 38, 0.22 + 0.17 * Math.sin(t * 0.83), 90);
+    glow(E2.x, E2.y, w * 0.062, 196, 0.20 + 0.16 * Math.sin(t * 1.21 + 2), 92);
 
-    gc.setTransform(0.5, 0, 0, 0.5, 0, 0);
-    gc.fillStyle = "#04000e";
-    gc.fillRect(0, 0, W, H);
-    gc.globalCompositeOperation = "lighter";
-
-    const cx = W / 2, cy = H / 2, R = Math.hypot(W, H) * 0.6;
-    const RINGS = 14, SYM = 6;
-
-    gc.save();
-    gc.translate(cx, cy);
-    for (let m = 0; m < SYM; m++) {
-      gc.save();
-      gc.rotate((m / SYM) * Math.PI * 2 + t * 0.03 * (m % 2 ? 1 : -1));
-      for (let k = 0; k < RINGS; k++) {
-        const z  = ((k / RINGS) + (t * 0.05) % 1) % 1;
-        const rr = Math.pow(z, 1.7) * R;
-        if (rr < 3) continue;
-        const fade = Math.min(1, z * 4) * (1 - z);
-
-        gc.beginPath();
-        const N = 60;
-        for (let n = 0; n <= N; n++) {
-          const a = (n / N) * Math.PI * 2;
-          const r = lerp(radius(A.kind, a), radius(B.kind, a), f) * rr;
-          const x = Math.cos(a + k * 0.2 + t * 0.1) * r;
-          const y = Math.sin(a + k * 0.2 + t * 0.1) * r;
-          n ? gc.lineTo(x, y) : gc.moveTo(x, y);
-        }
-        gc.closePath();
-        gc.strokeStyle = `hsla(${hue + k * 14},100%,62%,${0.5 * fade})`;
-        gc.lineWidth = 0.8 + z * 3;
-        gc.stroke();
-      }
-      gc.restore();
+    /* a ring leaves an eye now and then and opens outwards — the room
+       noticing you */
+    ringT += dt;
+    const period = 5.4;
+    const rp = (ringT % period) / period;
+    if (rp < 0.62) {
+      const e = ringT % (period * 2) < period ? E1 : E2;
+      const k = rp / 0.62;
+      ctx.strokeStyle = `hsla(${ringT % (period * 2) < period ? 40 : 196},100%,80%,${0.34 * (1 - k)})`;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, w * (0.05 + k * 0.30), 0, Math.PI * 2);
+      ctx.stroke();
     }
-    gc.restore();
 
-    const core = gc.createRadialGradient(cx, cy, 0, cx, cy, R * 0.45);
-    core.addColorStop(0, `hsla(${hue + 40},100%,72%,0.2)`);
-    core.addColorStop(1, "hsla(0,0%,0%,0)");
-    gc.fillStyle = core;
-    gc.fillRect(0, 0, W, H);
+    // the shaft of light up the middle, with pulses climbing it
+    const beam = ctx.createLinearGradient(x + w * 0.5 - w * 0.03, 0, x + w * 0.5 + w * 0.03, 0);
+    beam.addColorStop(0,   "hsla(0,0%,0%,0)");
+    beam.addColorStop(0.5, `hsla(50,100%,88%,${0.12 + 0.05 * Math.sin(t * 0.9)})`);
+    beam.addColorStop(1,   "hsla(0,0%,0%,0)");
+    ctx.fillStyle = beam;
+    ctx.fillRect(x + w * 0.47, y, w * 0.06, h * 0.78);
 
-    gc.globalCompositeOperation = "source-over";
-    const vig = gc.createRadialGradient(cx, cy, Math.min(W, H) * 0.18, cx, cy, R);
-    vig.addColorStop(0,   "rgba(4,0,14,0)");
-    vig.addColorStop(0.7, "rgba(4,0,14,0.42)");
-    vig.addColorStop(1,   "rgba(4,0,14,0.9)");
-    gc.fillStyle = vig;
-    gc.fillRect(0, 0, W, H);
-  }
-
-  /* ---------- which option are we on ---------- */
-  function subFor(o) {
-    const cfg   = g_("CONFIG", {});
-    const secs  = g_("SECTORS", []);
-    const round = g_("ROUND", 1);
-    const total = g_("SUPPLY_PER_ROUND", 111);
-    const here  = (secs[round - 1] && secs[round - 1].name) || "";
-    switch (o.key) {
-      case "mint":    return cfg.mintLink ? `Round ${round} · ${here}` : "not open yet";
-      case "map":     return "flat realm, then fly in";
-      case "beings":  return `${total} in this sector`;
-      case "rewards": return "share, witnesses, pilgrims";
-      case "lore":    return "only opened chapters";
-      default:        return "";
+    for (let k = 0; k < 3; k++) {
+      const u = ((t * 0.19 + k / 3) % 1);
+      const py = y + h * (0.74 - u * 0.66);
+      const a  = Math.sin(u * Math.PI) * 0.5;
+      glow(x + w * 0.5, py, w * 0.05, 52, a * 0.5, 94);
     }
-  }
 
-  let current = -1;
-  function settle(p) {
-    const n = Math.round(p);
-    if (n === current) return;
-    current = n;
-    document.querySelectorAll(".dot-j").forEach((d, k) =>
-      d.classList.toggle("on", k === n));
-    const sub = document.querySelector(".j-sub");
-    if (sub) sub.textContent = subFor(OPTIONS[n]);
-  }
-
-  function choose() {
-    const o = OPTIONS[Math.round(progress())];
-    if (o.href) { window.location.href = o.href; return; }
-    if (o.link) {
-      const cfg = g_("CONFIG", {});
-      const url = (cfg.links && cfg.links[o.link]) || "";
-      if (url) window.open(url, "_blank", "noopener");
-      return;
+    /* light moving across the crystal — three slow bands, as though
+       something out of frame were turning */
+    for (let k = 0; k < 3; k++) {
+      const bx = (((t * 0.035 + k / 3) % 1) * 1.6 - 0.3) * W;
+      const half = W * 0.22;
+      const l = Math.max(0, bx - half), r = Math.min(W, bx + half);
+      if (r <= l) continue;
+      const sweep = ctx.createLinearGradient(bx - half, 0, bx + half, H);
+      sweep.addColorStop(0,   "hsla(0,0%,0%,0)");
+      sweep.addColorStop(0.5, `hsla(${190 + k * 46},100%,74%,0.06)`);
+      sweep.addColorStop(1,   "hsla(0,0%,0%,0)");
+      ctx.fillStyle = sweep;
+      ctx.fillRect(l, 0, r - l, H);
     }
-    if (o.panel && window.RealmPanels) window.RealmPanels.show(o.panel);
+
+    // dust
+    for (const m of motes) {
+      m.y -= m.vy * dt;
+      if (m.y < -0.02) { m.y = 1.02; m.x = Math.random(); }
+      const mx = (m.x + Math.sin(t * 0.25 + m.drift) * 0.012) * W;
+      const my = m.y * H;
+      const a  = 0.25 + 0.6 * Math.abs(Math.sin(t * m.tw + m.drift));
+      ctx.fillStyle = `hsla(${m.hue},90%,86%,${a * 0.5})`;
+      ctx.beginPath();
+      ctx.arc(mx, my, m.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.globalCompositeOperation = "source-over";
+
+    /* ---------- the things that live here ----------
+       Drawn solid, not as light. The room is bright enough that
+       anything added to it would simply vanish, so each being gets a
+       pocket of dark to stand in and its own glow on top. */
+    bakeBeings();
+    for (const b of beings) {
+      b.x += b.vx * dt; b.y += b.vy * dt;
+      if (b.x < 0.06 || b.x > 0.94) b.vx *= -1;
+      if (b.y < 0.10 || b.y > 0.62) b.vy *= -1;
+
+      const d  = w * b.s * (1 + Math.sin(t * 0.9 + b.ph) * 0.09);
+      const bx = x + b.x * w, by = y + b.y * h;
+      if (bx < -d || bx > W + d || by < -d || by > H * 0.92) continue;
+
+      ctx.drawImage(pocket(), bx - d, by - d, d * 2, d * 2);
+
+      ctx.globalAlpha = 0.72 + 0.22 * Math.sin(t * 0.7 + b.ph);
+      ctx.drawImage(b.img, bx - d / 2, by - d / 2, d, d);
+      ctx.globalAlpha = 1;
+
+      ctx.globalCompositeOperation = "lighter";
+      glow(bx, by, d * 0.8, 200 + (b.ph * 30) % 120, 0.1, 80);
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    /* ---------- hold the room back so the words read ---------- */
+    if (overlay) ctx.drawImage(overlay, 0, 0, W, H);
   }
-  morph.addEventListener("click", choose);
 
   /* ---------- the loop ---------- */
   let running = false, last = 0;
   function tick(ms) {
     if (!running) return;
     requestAnimationFrame(tick);
-    if (document.hidden || ms - last < 30) return;
+    if (document.hidden) { last = ms; return; }
+    const dt = Math.min(0.05, (ms - last) * 0.001);
+    if (ms - last < 26) return;
     last = ms;
-    const t = ms * 0.001;
-    const p = progress();
-    settle(p);
-    drawGeo(p, t);
-    drawMorph(p, t);
+    paint(ms * 0.001, dt);
   }
 
-  /* ---------- build ---------- */
-  function build() {
-    const stops = document.querySelector(".j-stops");
-    const dots  = document.querySelector(".j-dots");
-    OPTIONS.forEach((o, i) => {
-      const sec = document.createElement("section");
-      sec.className = "stop";
-      // a real control for keyboards and screen readers
-      const btn = document.createElement(o.href ? "a" : "button");
-      btn.className = "stop-hit";
-      btn.addEventListener("focus", () => wrap.scrollTo({ top: i * H }));
-      if (o.href) btn.href = o.href; else btn.type = "button";
-      btn.textContent = o.label;
-      btn.addEventListener("click", e => {
-        if (!o.href) { e.preventDefault(); wrap.scrollTo({ top: i * H, behavior: "smooth" }); setTimeout(choose, 420); }
-      });
-      sec.appendChild(btn);
-      stops.appendChild(sec);
+  /* ---------- what each way on says about itself ---------- */
+  function noteFor(o) {
+    const cfg   = g_("CONFIG", {});
+    const secs  = g_("SECTORS", []);
+    const round = g_("ROUND", 1);
+    const total = g_("SUPPLY_PER_ROUND", 111);
+    switch (o.key) {
+      case "mint":    return cfg.mintLink ? "open" : "shut";
+      case "map":     return round + " of 10 open";
+      case "beings":  return total + " here";
+      case "rewards": return "who it reaches";
+      case "lore":    return (secs[round - 1] && secs[round - 1].name) || "";
+      default:        return "";
+    }
+  }
 
-      const d = document.createElement("button");
-      d.className = "dot-j" + (i ? "" : " on");
-      d.type = "button";
-      d.setAttribute("aria-label", o.label);
-      d.addEventListener("click", () => wrap.scrollTo({ top: i * H, behavior: "smooth" }));
-      dots.appendChild(d);
+  function open(o) {
+    if (o.href) { window.location.href = o.href; return; }
+    if (o.panel && window.RealmPanels) window.RealmPanels.show(o.panel);
+  }
+
+  /* ---------- writing that moves, same as the door ---------- */
+  function liquify(el, text) {
+    [...text].forEach((ch, i) => {
+      const sp = document.createElement("span");
+      sp.className = "ch";
+      sp.style.setProperty("--i", i);
+      sp.textContent = ch;
+      if (ch === " ") sp.style.width = ".34em";
+      el.appendChild(sp);
     });
+  }
+
+  function build() {
+    const menu = document.querySelector(".j-menu");
+    if (!menu || menu.children.length) return;
+
+    OPTIONS.forEach(o => {
+      const el = document.createElement(o.href ? "a" : "button");
+      el.className = "slab";
+      if (o.href) el.href = o.href; else el.type = "button";
+
+      const word = document.createElement("b");
+      word.className = "slab-in";
+      liquify(word, o.label);
+
+      const note = document.createElement("i");
+      note.className = "slab-note";
+      note.textContent = noteFor(o);
+
+      el.append(word, note);
+      el.addEventListener("click", e => {
+        if (!o.href) { e.preventDefault(); open(o); }
+      });
+      menu.appendChild(el);
+    });
+
+    const where = document.querySelector(".j-where");
+    if (where) {
+      const secs = g_("SECTORS", []), round = g_("ROUND", 1);
+      const name = (secs[round - 1] && secs[round - 1].name) || "";
+      where.textContent = name ? `Round ${round} · ${name}` : `Round ${round}`;
+    }
   }
 
   /* Only show a social link if it actually goes somewhere. The
@@ -552,12 +423,11 @@ window.RealmJourney = (() => {
   function socials() {
     const cfg  = g_("CONFIG", {});
     const nest = document.querySelector(".j-social");
-    if (!nest || !cfg.links) return;
+    if (!nest || !cfg.links || nest.children.length) return;
     const REAL = { x: "X", telegram: "Telegram", marketplace: "Market" };
     Object.entries(REAL).forEach(([key, name]) => {
       const url = cfg.links[key] || "";
-      const placeholder = /^https:\/\/(x\.com|t\.me)\/?$/.test(url);
-      if (!url || placeholder) return;
+      if (!url || /^https:\/\/(x\.com|t\.me)\/?$/.test(url)) return;
       const a = document.createElement("a");
       a.href = url; a.target = "_blank"; a.rel = "noopener";
       a.textContent = name;
@@ -565,16 +435,18 @@ window.RealmJourney = (() => {
     });
   }
 
-  /* a way back out of the journey, without a reload */
+  /* back out to the door — the door is a whole entrance, so it is
+     opened again rather than kept alive behind this */
   const back = document.getElementById("j-back");
   if (back) back.addEventListener("click", () => {
-    if (window.RealmPanels) RealmPanels.hide();
-    wrap.scrollTo({ top: 0, behavior: "smooth" });
+    if (document.querySelector(".panel:not([hidden])")) {
+      if (window.RealmPanels) RealmPanels.hide();
+      return;
+    }
+    window.location.reload();
   });
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape" && !document.querySelector(".panel:not([hidden])")) {
-      wrap.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    if (e.key === "Escape" && window.RealmPanels) RealmPanels.hide();
   });
 
   function start() {
@@ -582,10 +454,8 @@ window.RealmJourney = (() => {
     build();
     socials();
     resize();
-    labels = OPTIONS.map(o => bakeLabel(o.label, o.hue));
     running = true;
-    settle(0);
-    drawGeo(0, 0); drawMorph(0, 0);
+    paint(0, 0);
     if (!still) requestAnimationFrame(tick);
   }
 
