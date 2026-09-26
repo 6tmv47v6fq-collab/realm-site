@@ -33,6 +33,19 @@
   --t-god:#fde68a;
 }
 
+/* ---------- digits ----------
+   A pixel face cannot tell 8 from B or 5 from S, and every number on this
+   site is one somebody is deciding money on. So the words stay pixel and
+   the numbers get a face that can be read at a glance, with figures that
+   line up in a column. */
+.num,.price b,.rw-row b,.tier .count,.qty-num,.bar-label,.slab-note,
+.standing dd,.pill,.timeline .d,.j-where,.ch.num{
+  font-family:'Space Grotesk',system-ui,sans-serif;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:.02em;
+}
+.num{font-size:1.06em}
+
 *{box-sizing:border-box}
 body{
   margin:0;

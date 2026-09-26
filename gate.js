@@ -702,7 +702,7 @@
     el.textContent = "";
     [...text].forEach((ch, i) => {
       const sp = document.createElement("span");
-      sp.className = cls;
+      sp.className = cls + (/\d/.test(ch) ? " num" : "");
       sp.style.setProperty("--i", i);
       sp.textContent = ch;
       if (ch === " ") sp.style.width = ".32em";

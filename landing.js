@@ -204,6 +204,37 @@
     timeline.appendChild(li);
   });
 
+  /* ---------- digits in prose ----------
+     The numeric face is applied by class, and CSS cannot select a digit
+     inside a sentence. So every run of digits in the panels is wrapped
+     once, after everything is built. Text nodes only — no element, event
+     or attribute is touched. */
+  function numerify(root) {
+    const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const hits = [];
+    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+      if (/\d/.test(n.nodeValue) && !(n.parentNode && n.parentNode.classList.contains("num")))
+        hits.push(n);
+    }
+    for (const node of hits) {
+      const text = node.nodeValue;
+      const frag = document.createDocumentFragment();
+      let last = 0;
+      text.replace(/\d[\d,.]*/g, (m, i) => {
+        if (i > last) frag.appendChild(document.createTextNode(text.slice(last, i)));
+        const sp = document.createElement("span");
+        sp.className = "num";
+        sp.textContent = m;
+        frag.appendChild(sp);
+        last = i + m.length;
+        return m;
+      });
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    }
+  }
+  $$(".panel").forEach(numerify);
+
   /* ---------- panels ---------- */
   let openPanel = null;
 
