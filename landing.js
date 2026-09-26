@@ -63,9 +63,15 @@
     mintBtn.textContent = "Mint on the launchpad";
     mintNote.textContent = "Opens the official mint page. Connect your Solana wallet there.";
   } else {
+    /* nothing to choose while the gate is shut — offering a quantity
+       would suggest there is something to take */
+    const qtyBox = $(".qty"), limit = $(".limit");
+    if (qtyBox) qtyBox.hidden = true;
+    if (limit)  limit.hidden = true;
     mintBtn.classList.add("disabled");
-    mintBtn.textContent = "Mint opens soon";
-    mintNote.textContent = "The gate for this round has not been opened yet.";
+    mintBtn.textContent = "The gate is shut";
+    mintNote.textContent = "The gate for this round has not been opened yet. "
+                         + "When it is, this becomes the only mint link — anything else is not us.";
   }
 
   /* ---------- links ---------- */
@@ -76,15 +82,38 @@
     else el.remove();
   });
 
-  /* ---------- rarity ---------- */
+  /* ---------- the eight tiers ----------
+     Each row shows an actual being of that tier rather than a coloured
+     dot, drawn by the same generator the chamber uses. */
   const tiersEl = $(".tiers");
-  TIERS.forEach(t => {
+  TIERS.forEach((t, i) => {
     const el = document.createElement("div");
-    el.className = "tier";
+    el.className = "tier" + (t.key === "god" ? " god" : "");
     el.style.setProperty("--c", t.color);
-    el.innerHTML = `<span class="dot"></span>
-                    <span class="name">${t.name}</span>
-                    <span class="count"><b>${t.count}</b>per round</span>`;
+
+    const slot = document.createElement("span");
+    slot.className = "form-slot";
+    if (window.RealmForms) {
+      const form = RealmForms.makeForm({
+        id: 100 + i, n: i + 1, tier: t.key, tierName: t.name, color: t.color
+      });
+      form.style.setProperty("--fs", (21 + i * 3.6).toFixed(0) + "px");
+      slot.appendChild(form);
+    }
+    el.appendChild(slot);
+
+    const rest = document.createElement("span");
+    rest.className = "name";
+    rest.textContent = t.name;
+    el.appendChild(rest);
+
+    const count = document.createElement("span");
+    count.className = "count";
+    count.innerHTML = t.key === "god"
+      ? `<b>1</b>per sector`
+      : `<b>${t.count}</b>per round`;
+    el.appendChild(count);
+
     tiersEl.appendChild(el);
   });
 

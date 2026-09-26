@@ -1,30 +1,41 @@
 # REALM
 
-10 sectors of the DMT realm. 10 rounds of 111 NFTs, max 3 per wallet, on Solana.
+10 sectors of the DMT realm. 10 rounds of 111 beings, max 3 per wallet, on Solana.
 
-This is a plain website — no build step, no framework, no dependencies to install.
+One page. No build step, no framework, nothing to install.
+
+---
+
+## How the site is shaped
+
+Everything happens on `index.html`, in three states:
+
+1. **The door** — the Gatekeeper on near-black, and one way in.
+2. **The tunnel** — you are pulled through the being's mouth.
+3. **The chamber** — the room you come out into, with five ways on.
+
+Each of the five opens a panel over the room: Mint, The Beings, Rewards,
+Lore, The Rounds. Nothing navigates away.
 
 ---
 
 ## Deploy on Railway
 
-1. Put these files in a GitHub repository.
-2. In Railway: **New Project → Deploy from GitHub repo**, pick the repo.
-3. Railway reads `package.json`, runs `npm start`, and the site is live.
+1. Push these files to the GitHub repository.
+2. Railway reads `package.json`, runs `npm start`, and the site is live.
 
-There is nothing to configure. Railway sets `PORT` automatically and
-`server.js` uses it.
+Nothing to configure — Railway sets `PORT` and `server.js` uses it.
+If a push doesn't appear, check **Source → auto deploy is enabled** in Railway.
 
 ---
 
 ## Changing the site
 
-Everything you will ever need to edit is in **`data.js`**. Both the homepage
-and the immersive realm read from it, so you only change things in one place.
+Everything you will ever need to edit is in **`data.js`**.
 
 ```js
 const CONFIG = {
-  currentRound: 1,      // 1-10. This unlocks sectors and lore automatically.
+  currentRound: 1,      // 1-10. Unlocks sectors and lore automatically.
   minted: 0,            // how many of this round's 111 are gone
   mintLink: "",         // your launchpad mint page URL
   links: {
@@ -45,26 +56,31 @@ currentRound: 2,
 
 That single edit will:
 
-- light up sector 2 on the map and mark it as the live round
-- unlock lore chapter 2 (chapter 3 onward stay blurred and SEALED)
-- move the roadmap marker
-- update the round number everywhere on the page
+- name sector 2 as the live round, on the door and in the chamber
+- unlock lore chapter 2 (3 onward stay sealed)
+- move the marker down the rounds list
 
-Commit the change, and Railway redeploys in about a minute.
+Commit it, and Railway redeploys in about a minute.
 
 ### Turning the mint on
 
 Paste your launchpad link into `mintLink`. While it is empty the button
-reads "Mint opens soon" and cannot be clicked.
+reads "The gate is shut" and cannot be clicked, and the chamber says SHUT
+next to MINT.
 
 ### Editing the story
 
-The `SECTORS` list in `data.js` holds each sector's name, lore and colour.
-Edit the text between the quotes. Keep all ten entries.
+The `SECTORS` list holds each sector's name, lore and colour. Edit the text
+between the quotes. Keep all ten entries.
 
 ### Changing the rarity split
 
-The `TIERS` list in `data.js` holds the eight tiers. **The counts must add up to 111.**
+The `TIERS` list holds the eight tiers. **The counts must add up to 111.**
+
+### Social links
+
+A link only appears once it is real. The placeholders (`https://x.com/`,
+`https://t.me/`) are treated as blanks and stay hidden.
 
 ---
 
@@ -73,36 +89,42 @@ The `TIERS` list in `data.js` holds the eight tiers. **The counts must add up to
 | File | What it is |
 |------|------------|
 | **`data.js`** | **the only file you edit** — round, mint link, sectors, rarity |
-| `index.html` | the homepage |
-| `styles.css` | homepage styling |
-| `app.js` | homepage logic |
-| `realm.html` | the immersive full-screen realm |
-| `realm.css` | realm styling |
-| `realm.js` | the realm engine — 111 drifting beings per sector |
+| `index.html` | the whole site |
+| `styles.css` | the shared look: black, gold hairline, two typefaces |
+| `landing.css` | the door, the chamber and the panels |
+| `creature.js` | loads the Gatekeeper artwork and cuts its black away |
+| `gate.js` | the door, the swallow and the tunnel |
+| `journey.js` | the chamber — the room, everything alive in it, and the menu |
+| `landing.js` | fills the panels from `data.js` |
+| `forms.js` | draws a being for a tier |
+| `keeper.jpg` | the Gatekeeper |
+| `chamber.jpg` | the room you come out into |
 | `server.js` | the tiny server Railway runs |
 | `package.json` | tells Railway how to start it |
 
+Each picture also has a `-small` version, used on phones.
+
 ---
 
-## The immersive realm
+## Replacing the artwork
 
-`realm.html` is a living map: 111 beings drift inside each sector, glowing in
-their rarity's colour, rarer ones larger and slower with turning geometric
-halos. Tap one to open it.
+Drop in a new `keeper.jpg` (and `keeper-small.jpg`) and the door uses it.
+If the face sits somewhere different, change `MOUTH` at the top of
+`creature.js` — those two numbers are where the tunnel aims, measured as a
+fraction across and down the picture.
 
-Right now every being is **sealed** — no NFTs exist yet. After your first mint,
-put your collection address and a Helius API key in `data.js`, then follow the
-short note at the bottom of `realm.js` to switch the live data on. The beings
-that have been minted will then show their real artwork and current owner; the
-rest stay sealed.
+Same for `chamber.jpg`. If the new room's landmarks move, the fractions near
+the top of `journey.js` (`EYE_HIGH`, `EYE_BIG`, `DOOR`, `FLOOR`) say where
+the light lands.
 
-Sealed sectors can't be entered. `currentRound` controls that too.
+Both pictures are painted on black, and the black is cut away in code, so
+anything on a black background will sit on the site cleanly.
 
 ---
 
 ## Note on the mint
 
 This site does not mint anything itself — the Mint button sends people to
-your launchpad, which handles payment, the 111 supply cap and the 3-per-wallet
-limit. Set the collection up on a Solana launchpad first, then paste the link
-into `mintLink`.
+your launchpad, which handles payment, the 111 supply cap and the
+3-per-wallet limit. Set the collection up on a Solana launchpad first, then
+paste the link into `mintLink`.

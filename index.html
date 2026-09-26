@@ -43,8 +43,7 @@
     <p class="j-where"></p>
     <nav class="j-menu" aria-label="The realm"></nav>
     <nav class="j-more">
-      <button type="button" data-open="rounds">Rounds</button>
-      <button type="button" data-open="faq">FAQ</button>
+      <button type="button" data-open="faq">Questions</button>
     </nav>
   </div>
 
@@ -56,11 +55,12 @@
 <section class="panel" id="p-mint" hidden>
   <button class="panel-close" aria-label="Close">&times;</button>
   <div class="panel-in">
-    <h2>Mint</h2>
+    <h2 data-sector-name></h2>
+    <p class="lede">The sector open in this round. One hundred and eleven beings live here, and when they are gone the gate shuts and the next sector opens.</p>
     <div class="mint-card">
       <div class="mint-head">
         <span class="pill">Round <span data-round></span></span>
-        <span class="pill soft" data-sector-name></span>
+        <span class="pill soft">Sealed until reveal</span>
       </div>
       <div class="bar"><div class="bar-fill" data-bar></div></div>
       <p class="bar-label"><span data-minted></span> / <span data-supply></span> minted</p>
@@ -80,10 +80,9 @@
   <button class="panel-close" aria-label="Close">&times;</button>
   <div class="panel-in">
     <h2>The Beings</h2>
-    <p class="lede">Every round holds 111 beings across eight tiers. Only ten Gods will ever exist — one per sector.</p>
+    <p class="lede">Every round holds 111 beings across eight tiers. One God per sector, so ten Gods will ever exist.</p>
     <div class="tiers"></div>
-    <a class="btn primary wide" href="world.html">See them in the realm</a>
-    <p class="fine">Fly through the sector they live in.</p>
+    <p class="fine">Every being stays sealed until the round finishes. Nobody, including us, knows which tier a mint holds until the reveal.</p>
   </div>
 </section>
 
@@ -94,18 +93,21 @@
     <div class="cards">
       <article class="card">
         <h3>Sector Share</h3>
-        <p>Epic and above hold a share of the revenue flowing through their sector. The rarer the being, the deeper the channel.</p>
+        <p>Whatever flows through a sector is shared with the beings that hold it. The rarer the being, the deeper its channel runs.</p>
+        <p class="who">Epic and above</p>
       </article>
       <article class="card">
         <h3>The Witnesses</h3>
-        <p>Each round a set of Commons and Uncommons is chosen as Witnesses. They saw what happened, so they are paid for it. No being is worthless here.</p>
+        <p>Each round a set of the lower tiers is chosen as Witnesses. They saw what happened in their sector, so they are paid for it. No being here is worthless.</p>
+        <p class="who">Commons and Uncommons, chosen each round</p>
       </article>
       <article class="card">
         <h3>The Pilgrim Bonus</h3>
-        <p>Hold beings from several sectors and you walk the realm rather than camp in it. Pilgrims earn a rising bonus with every new sector they hold.</p>
+        <p>Hold beings from more than one sector and you are walking the realm rather than camping in it. A pilgrim's share rises with every further sector held.</p>
+        <p class="who">Anyone holding across two sectors or more</p>
       </article>
     </div>
-    <p class="disclaimer">Nothing here is a promise of profit. REALM is an art and community project. Rewards depend on activity that may not happen.</p>
+    <p class="disclaimer">None of this is a promise of profit, and none of the amounts are set. REALM is an art and community project; anything shared depends on activity that may never happen. Do not buy a being expecting an income.</p>
   </div>
 </section>
 
@@ -121,7 +123,8 @@
 <section class="panel" id="p-rounds" hidden>
   <button class="panel-close" aria-label="Close">&times;</button>
   <div class="panel-in">
-    <h2>Rounds</h2>
+    <h2>The Rounds</h2>
+    <p class="lede">Ten rounds, one sector each. A round opens, its 111 beings are taken, and the realm reaches one sector further in. After the tenth there is no eleventh.</p>
     <ol class="timeline"></ol>
   </div>
 </section>
@@ -141,7 +144,9 @@
     <details><summary>Are the common ones worthless?</summary>
       <p>No. Commons and Uncommons can be chosen as Witnesses each round, and they carry the story of their sector.</p></details>
     <details><summary>What happens after round 10?</summary>
-      <p>The map is complete, the Source opens, and the collection closes forever. No round 11.</p></details>
+      <p>The realm is complete, the Source opens, and the collection closes forever. There is no round 11.</p></details>
+    <details><summary>When does minting open?</summary>
+      <p>When the gate for the round is opened. Until then the mint control on this site says so plainly rather than taking anything.</p></details>
     <p class="fine">Not financial advice. Mint responsibly.</p>
   </div>
 </section>

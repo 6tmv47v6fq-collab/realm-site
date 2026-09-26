@@ -17,10 +17,10 @@ window.RealmJourney = (() => {
 
   const OPTIONS = [
     { key: "mint",    label: "MINT",       panel: "mint" },
-    { key: "map",     label: "THE MAP",    href:  "realm.html" },
     { key: "beings",  label: "THE BEINGS", panel: "nfts" },
     { key: "rewards", label: "REWARDS",    panel: "rewards" },
-    { key: "lore",    label: "LORE",       panel: "lore" }
+    { key: "lore",    label: "LORE",       panel: "lore" },
+    { key: "rounds",  label: "THE ROUNDS", panel: "rounds" }
   ];
 
   return { OPTIONS };
@@ -361,10 +361,10 @@ window.RealmJourney = (() => {
     const total = g_("SUPPLY_PER_ROUND", 111);
     switch (o.key) {
       case "mint":    return cfg.mintLink ? "open" : "shut";
-      case "map":     return round + " of 10 open";
       case "beings":  return total + " here";
       case "rewards": return "who it reaches";
       case "lore":    return (secs[round - 1] && secs[round - 1].name) || "";
+      case "rounds":  return round + " of 10";
       default:        return "";
     }
   }

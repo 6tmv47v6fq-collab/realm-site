@@ -21,9 +21,8 @@ const CONFIG = {
   },
 
   /* --- LIVE NFT DATA (leave alone until after your first mint) ---
-     Once the collection exists, put its address here and the realm will
-     show the real beings, their art and their owners instead of the
-     sealed placeholder forms. See the note at the bottom of realm.js. */
+     Kept for when the collection exists and the site can read the real
+     beings and their owners. Nothing reads these yet. */
   collectionAddress: "",
   heliusApiKey: ""
 };
