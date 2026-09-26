@@ -183,6 +183,25 @@ across with a 44-colour palette, about 100 KB each.
 
 ---
 
+## Connecting a wallet
+
+`wallet.js`. It is **read only**. The site never asks anyone to sign a
+transaction or approve spending, and the sheet says so before they connect.
+The mint happens on the launchpad, not here.
+
+Wallets are found through the **Wallet Standard**, not by reaching for
+`window.phantom` or `window.solana`. That is how every Solana wallet
+announces itself now, so one piece of code finds Phantom, Solflare,
+Backpack and MetaMask alike, and there is no list of wallets to keep up to
+date as new ones appear.
+
+Right now connecting shows the address and says plainly that there is
+nothing to read. Once the collection exists, put its address and a Helius
+key into `data.js` and that panel becomes where a holder sees their beings
+and the weight they carry.
+
+---
+
 ## Note on the mint
 
 This site does not mint anything itself — the Mint button sends people to

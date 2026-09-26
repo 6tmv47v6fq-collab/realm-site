@@ -40,6 +40,61 @@ body[data-phase="tunnel"] .topbar{opacity:0;pointer-events:none}
 }
 .top-links a:hover{color:#e3ba5c}
 
+/* ---------- the wallet ---------- */
+.wal{
+  font-family:'Pixelify Sans',system-ui,sans-serif;font-weight:700;
+  font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;
+  padding:7px 13px;cursor:pointer;white-space:nowrap;
+  background:#000;border:1px solid rgba(227,186,92,.45);color:#f4efe4;
+  transition:border-color .25s,color .25s;
+}
+.wal:hover{border-color:#e3ba5c;color:#e3ba5c}
+.wal.on{border-color:rgba(157,143,196,.5);color:#9d8fc4;text-transform:none}
+
+.wal-sheet{
+  position:fixed;z-index:60;left:50%;transform:translateX(-50%) translateY(10px);
+  top:calc(56px + env(safe-area-inset-top));
+  width:min(92vw,340px);padding:18px 18px 14px;
+  background:#000;border:1px solid rgba(227,186,92,.42);
+  opacity:0;transition:opacity .2s ease,transform .2s ease;
+}
+.wal-sheet.here{opacity:1;transform:translateX(-50%) translateY(0)}
+.wal-sheet[hidden]{display:none}
+.wal-sheet h3{
+  margin:0 0 8px;font-family:'Pixelify Sans',system-ui,sans-serif;font-weight:700;
+  font-size:1rem;letter-spacing:.14em;text-transform:uppercase;color:#f4efe4;
+}
+.wal-note{margin:0 0 14px;font-size:.72rem;line-height:1.6;color:#6d6192}
+
+.wal-row{
+  display:flex;align-items:center;gap:11px;width:100%;
+  padding:11px 13px;margin-bottom:7px;cursor:pointer;text-align:left;
+  background:#07040f;border:1px solid rgba(227,186,92,.2);color:#f4efe4;
+}
+.wal-row:hover:not(:disabled){border-color:#e3ba5c}
+.wal-row:disabled{cursor:default;color:#6d6192}
+.wal-row img{display:block;flex:none;image-rendering:auto}
+.wal-row b{display:block;font-family:'Pixelify Sans',system-ui,sans-serif;
+  font-weight:700;font-size:.86rem;letter-spacing:.08em}
+.wal-row i{display:block;font-style:normal;font-size:.68rem;color:#6d6192}
+
+.wal-hold{
+  padding:13px;margin-bottom:12px;background:#07040f;
+  border:1px solid rgba(227,186,92,.2);
+}
+.wal-hold b{display:block;font-family:'Pixelify Sans',system-ui,sans-serif;
+  font-weight:700;font-size:.84rem;letter-spacing:.08em;color:#e3ba5c;margin-bottom:5px}
+.wal-hold i{display:block;font-style:normal;font-size:.72rem;line-height:1.6;color:#9d8fc4}
+
+.wal-close{
+  width:100%;padding:10px;cursor:pointer;margin-top:4px;
+  font-family:'Pixelify Sans',system-ui,sans-serif;font-weight:700;
+  font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;
+  background:#000;border:1px solid rgba(227,186,92,.3);color:#f4efe4;
+}
+.wal-close:hover{border-color:#e3ba5c;color:#e3ba5c}
+.wal-close.ghost{border-color:rgba(157,143,196,.22);color:#6d6192}
+
 /* ---------- the door in the tree ---------- */
 .gate{
   position:absolute;inset:0;
