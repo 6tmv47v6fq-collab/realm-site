@@ -369,7 +369,7 @@ window.RealmJourney = (() => {
     switch (o.key) {
       case "mint":    return cfg.mintLink ? "open" : "shut";
       case "beings":  return here + " here";
-      case "rewards": return "who it reaches";
+      case "rewards": return g_("POOL_PERCENT", 75) + "% of each round";
       case "lore":    return (secs[round - 1] && secs[round - 1].name) || "";
       case "rounds":  return round + " of 10";
       default:        return "";

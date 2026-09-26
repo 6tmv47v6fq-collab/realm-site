@@ -52,15 +52,49 @@ function supplyFor(round) {
 
 /* Rarity breakdown per round — must add up to 111. */
 const TIERS = [
-  { name: "Common",    count: 40, key: "common",    color: "#9ca3af" , accent: "#e5e7eb" },
-  { name: "Uncommon",  count: 28, key: "uncommon",  color: "#34d399" , accent: "#a7f3d0" },
-  { name: "Rare",      count: 18, key: "rare",      color: "#3b82f6" , accent: "#67e8f9" },
-  { name: "Epic",      count: 11, key: "epic",      color: "#a855f7" , accent: "#f0abfc" },
-  { name: "Legendary", count: 7,  key: "legendary", color: "#f59e0b" , accent: "#fde68a" },
-  { name: "Mythic",    count: 4,  key: "mythic",    color: "#ef4444" , accent: "#fb923c" },
-  { name: "Entity",    count: 2,  key: "entity",    color: "#a5f3fc" , accent: "#c4b5fd" },
-  { name: "God",       count: 1,  key: "god",       color: "#fde68a" , accent: "#ffffff" }
+  { name: "Common",    count: 40, key: "common",    weight:  1,    color: "#9ca3af" , accent: "#e5e7eb" },
+  { name: "Uncommon",  count: 28, key: "uncommon",  weight:  2,  color: "#34d399" , accent: "#a7f3d0" },
+  { name: "Rare",      count: 18, key: "rare",      weight:  4,      color: "#3b82f6" , accent: "#67e8f9" },
+  { name: "Epic",      count: 11, key: "epic",      weight:  7,      color: "#a855f7" , accent: "#f0abfc" },
+  { name: "Legendary", count: 7,  key: "legendary", weight: 12, color: "#f59e0b" , accent: "#fde68a" },
+  { name: "Mythic",    count: 4,  key: "mythic",    weight: 20,    color: "#ef4444" , accent: "#fb923c" },
+  { name: "Entity",    count: 2,  key: "entity",    weight: 34,    color: "#a5f3fc" , accent: "#c4b5fd" },
+  { name: "God",       count: 1,  key: "god",       weight: 55,       color: "#fde68a" , accent: "#ffffff" }
 ];
+
+/* ============================================================
+   WHAT HOLDERS GET
+
+   When a round sells out, POOL_PERCENT of what it took is shared
+   among the people holding that round's beings. Rounds do not share.
+
+   Your slice of it:
+     (your beings' weights added up)
+       x your token multiplier
+       x your pilgrim multiplier
+   ============================================================ */
+
+const POOL_PERCENT = 75;          // of a round's mint, paid when it sells out
+const TOKEN_NAME   = "$DMT";
+
+/* how much the token multiplies your beings by */
+const TOKEN_BANDS = [
+  { hold:         0, mult: 1.0 },
+  { hold:     50000, mult: 1.2 },
+  { hold:    250000, mult: 1.5 },
+  { hold:   1000000, mult: 2.0 },
+  { hold:   5000000, mult: 3.0 },
+  { hold:  10000000, mult: 4.0 }    // the ceiling; it stops climbing here
+];
+
+/* holding across sectors, once round two opens */
+const PILGRIM_STEP = 0.1;         // per extra sector
+const PILGRIM_MAX  = 1.5;
+
+/* what a round's pool comes to, in SOL */
+function poolFor(round) {
+  return Math.round(supplyFor(round) * priceFor(round) * POOL_PERCENT) / 100;
+}
 
 /* The ten sectors, in the order they open.
    `hue` tints that sector's sky in the immersive realm (0-360). */

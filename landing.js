@@ -122,6 +122,62 @@
     tiersEl.appendChild(el);
   });
 
+  /* ---------- rewards ----------
+     Every number here comes out of data.js, so the panel cannot drift
+     away from the mechanism the way prose does. */
+  const rows = (el, pairs) => {
+    if (!el) return;
+    pairs.forEach(([left, right, lit]) => {
+      const r = document.createElement("div");
+      r.className = "rw-row" + (lit ? " lit" : "");
+      r.innerHTML = `<span>${left}</span><b>${right}</b>`;
+      el.appendChild(r);
+    });
+  };
+
+  const roundWeight = TIERS.reduce((a, t) => a + t.count * t.weight, 0);
+  const pool = poolFor(round);
+
+  const lede = $("[data-rw-lede]");
+  if (lede) lede.textContent =
+    `When a round sells out, ${POOL_PERCENT}% of what it took is shared among the people `
+    + `holding that round's beings. Your slice is three things multiplied together: the `
+    + `beings you hold, the ${TOKEN_NAME} you hold, and how many sectors you hold across.`;
+
+  const poolEl = $("[data-rw-pool]");
+  if (poolEl) poolEl.textContent =
+    `${POOL_PERCENT}% of every round's mint goes back to that round's holders. Round ${round} `
+    + `is ${roundSupply} beings at ${price} SOL, so its pool is ${pool} SOL. Rounds do not `
+    + `share — round ${round}'s money goes to round ${round}'s holders and nobody else.`;
+
+  const tokEl = $("[data-rw-token]");
+  if (tokEl) tokEl.textContent =
+    `${TOKEN_NAME} multiplies what your beings are worth, up to ${
+      TOKEN_BANDS[TOKEN_BANDS.length - 1].mult}× at the top. It cannot earn on its own: `
+    + `tokens with no being is nothing at all.`;
+
+  rows($("[data-rw-weights]"), TIERS.map(t =>
+    [t.name, t.weight + (t.weight === 1 ? " point" : " points"), t.key === "god"]));
+
+  rows($("[data-rw-bands]"), TOKEN_BANDS.map((b, i) =>
+    [b.hold === 0 ? `under ${TOKEN_BANDS[1].hold.toLocaleString()} ${TOKEN_NAME}`
+                  : b.hold.toLocaleString() + " " + TOKEN_NAME
+                    + (i === TOKEN_BANDS.length - 1 ? " or more" : ""),
+     b.mult.toFixed(1) + "×", i === TOKEN_BANDS.length - 1]));
+
+  const steps = Math.round((PILGRIM_MAX - 1) / PILGRIM_STEP);
+  rows($("[data-rw-pilgrim]"), [...Array(steps + 1)].map((_, i) =>
+    [i === steps ? `${i + 1} sectors or more` : (i ? `${i + 1} sectors` : "1 sector"),
+     (1 + i * PILGRIM_STEP).toFixed(2) + "×", i === steps]));
+
+  const fine = $("[data-rw-fine]");
+  if (fine) fine.textContent =
+    `Most of a round's pool is that round's own mint money coming back, shared out unevenly. `
+    + `Across ${roundSupply} holders the average is ${POOL_PERCENT}% of what they paid, so most `
+    + `people receive less than they put in and a few receive a great deal more. The only new `
+    + `money is the ${ROYALTY_PERCENT}% royalty on resales, and that only exists if people trade. `
+    + `None of this is a promise of profit, and none of it is financial advice.`;
+
   /* ---------- lore ---------- */
   const chaptersEl = $(".chapters");
   SECTORS.forEach((sector, i) => {
