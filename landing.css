@@ -61,9 +61,10 @@
 #keeper{
   max-width:min(104vw,600px);max-height:100%;width:auto;height:auto;
   display:block;opacity:0;transition:opacity .8s ease-out;
-  /* the art is painted on black; screen blending drops that black away
-     so the smoke drifts behind the being instead of stopping at a box */
-  mix-blend-mode:screen;
+  /* No blend mode. The black is cut out of the picture itself (see
+     creature.js), so the being carries its own transparency wherever it
+     is drawn. Blending only ever worked while nothing above it was
+     being faded or scaled — and the whole entrance does both. */
   filter:drop-shadow(0 0 46px rgba(139,92,246,.5));
   animation:keeperBreathe 13s ease-in-out infinite;
   /* the art is on black — feather it so it never reads as a pasted box */

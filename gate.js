@@ -423,8 +423,8 @@
   if (keeper && window.RealmCreature) {
     kc = keeper.getContext("2d");
     RealmCreature.load(img => {
-      art = img;
-      keeper.width = img.naturalWidth; keeper.height = img.naturalHeight;
+      art = img;                                  // black already cut away
+      keeper.width = art.width; keeper.height = art.height;
       MX = keeper.width  * RealmCreature.MOUTH.x;
       MY = keeper.height * RealmCreature.MOUTH.y;
       drawKeeper(0, 0);
@@ -590,7 +590,7 @@
     if (ease <= 0) {
       kc.drawImage(art, sw.x, sw.y, sw.w, sw.h);
     } else {
-      const aw = art.naturalWidth, ah = art.naturalHeight;
+      const aw = art.width, ah = art.height;
       const src = ah / SLICES;
       const k   = sw.h / ah;        // picture pixels -> canvas pixels
       const e2  = ease * ease;
