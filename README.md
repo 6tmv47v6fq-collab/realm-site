@@ -10,8 +10,8 @@ One page. No build step, no framework, nothing to install.
 
 Everything happens on `index.html`, in three states:
 
-1. **The door** — the Gatekeeper on near-black, and one way in.
-2. **The tunnel** — you are pulled through the being's mouth.
+1. **The door** — the tree, the doorway in its trunk, and one way in.
+2. **The tunnel** — you are rushed through that doorway.
 3. **The chamber** — the room you come out into, with five ways on.
 
 Each of the five opens a panel over the room: Mint, The Beings, Rewards,
@@ -92,12 +92,11 @@ A link only appears once it is real. The placeholders (`https://x.com/`,
 | `index.html` | the whole site |
 | `styles.css` | the shared look: black, gold hairline, two typefaces |
 | `landing.css` | the door, the chamber and the panels |
-| `creature.js` | loads the Gatekeeper artwork and cuts its black away |
-| `gate.js` | the door, the swallow and the tunnel |
+| `gate.js` | the tree, the rush into the doorway, and the tunnel |
 | `journey.js` | the chamber — the room, everything alive in it, and the menu |
 | `landing.js` | fills the panels from `data.js` |
 | `forms.js` | draws a being for a tier |
-| `keeper.jpg` | the Gatekeeper |
+| `tree.jpg` | the tree with the door in it |
 | `chamber.jpg` | the room you come out into |
 | `server.js` | the tiny server Railway runs |
 | `package.json` | tells Railway how to start it |
@@ -108,17 +107,23 @@ Each picture also has a `-small` version, used on phones.
 
 ## Replacing the artwork
 
-Drop in a new `keeper.jpg` (and `keeper-small.jpg`) and the door uses it.
-If the face sits somewhere different, change `MOUTH` at the top of
-`creature.js` — those two numbers are where the tunnel aims, measured as a
-fraction across and down the picture.
+Drop in a new `tree.jpg` (and `tree-small.jpg`) and the door screen uses it.
+Two lines at the top of `gate.js` say where things are in it:
 
-Same for `chamber.jpg`. If the new room's landmarks move, the fractions near
-the top of `journey.js` (`EYE_HIGH`, `EYE_BIG`, `DOOR`, `FLOOR`) say where
-the light lands.
+```js
+const AIM = { x: 0.545, y: 0.738 };   // the doorway — where the zoom goes
+const SUN = { x: 0.513, y: 0.436 };   // the burst of light in the canopy
+```
 
-Both pictures are painted on black, and the black is cut away in code, so
-anything on a black background will sit on the site cleanly.
+Both are fractions — how far across, how far down. If the new picture's
+doorway sits somewhere else, change those two numbers and the rush will aim
+at it.
+
+Same for `chamber.jpg`: the fractions near the top of `journey.js`
+(`EYE_HIGH`, `EYE_BIG`, `DOOR`, `FLOOR`) say where the light lands in the
+room.
+
+Both pictures are drawn full bleed, so anything tall and centred will work.
 
 ---
 

@@ -2,9 +2,14 @@
    REALM — the entrance.
 
    Three states on one page:
-     gate     a near-black door with one way in
-     tunnel   you are pulled through it
-     options  where you come out
+     gate     the tree, and the door in it
+     tunnel   you are pulled through the door
+     options  the chamber you come out into
+
+   The tree is a still picture. Everything that makes it feel like a
+   living place is drawn over it: light moves through the canopy, the
+   sun flares, fireflies drift, and the doorway breathes. Pressing
+   ENTER rushes the whole picture into that doorway.
 
    The tunnel is meant to be punishing. It measures its own frame rate
    and adds detail until the device is working hard, then holds there —
@@ -15,21 +20,35 @@
 (() => {
   "use strict";
 
-  const canvas = document.getElementById("sky");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
+  /* ---------- the picture, and the two places that matter in it ----------
+     Both are fractions: how far across, how far down. If the artwork is
+     ever replaced, these two lines are what to re-measure. */
+  const AIM = { x: 0.545, y: 0.738 };   // the doorway — where the zoom goes
+  const SUN = { x: 0.513, y: 0.436 };   // the burst of light in the canopy
 
-  /* two buffers, so each frame can be drawn on top of a scaled copy of
-     the last one — that feedback is what makes the tunnel feel endless */
+  const FULL = "tree.jpg";
+  const SMALL = "tree-small.jpg";       // lighter, for narrow screens
+
+  const canvas = document.getElementById("sky");
+  const tree   = document.getElementById("tree");
+  if (!canvas || !tree) return;
+  const ctx = canvas.getContext("2d");
+  const tc  = tree.getContext("2d");
+
+  /* two buffers, so each frame of the tunnel can be drawn on top of a
+     scaled copy of the last one — that feedback is what makes it feel
+     endless */
   const A = document.createElement("canvas"), a = A.getContext("2d");
   const B = document.createElement("canvas"), b = B.getContext("2d");
   let front = A, back = B, fc = a, bc = b;
 
-  let W = 0, H = 0, cx = 0, cy = 0, R = 0, SC = 1;
+  let W = 0, H = 0, cx = 0, cy = 0, R = 0, SC = 1, DPR = 1;
 
   function resize() {
     W = window.innerWidth;
     H = window.innerHeight;
+    DPR = Math.min(window.devicePixelRatio || 1, 1.6);
+
     canvas.width = W; canvas.height = H;
     SC = W > 900 ? 0.5 : 0.62;            // buffer scale
     const bw = Math.max(1, Math.floor(W * SC)), bh = Math.max(1, Math.floor(H * SC));
@@ -38,8 +57,13 @@
     R  = Math.hypot(W, H) * 0.6;
     fc.setTransform(SC, 0, 0, SC, 0, 0);
     bc.setTransform(SC, 0, 0, SC, 0, 0);
-    seedStars();
-    if (!puffs.length) seedSmoke();
+
+    tree.width  = Math.max(1, Math.round(W * DPR));
+    tree.height = Math.max(1, Math.round(H * DPR));
+    tc.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    bakeHush();
+    seedAir();
   }
   window.addEventListener("resize", resize);
 
@@ -49,9 +73,236 @@
   let quality = 0.55;          // climbs on fast devices, falls on slow ones
   const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  const TUNNEL_MS = 3800;
+  const TUNNEL_MS  = 3800;
+  const SWALLOW_MS = 1250;
 
-  /* ---------- drawing pieces ---------- */
+  const rand = (a, b) => a + Math.random() * (b - a);
+
+
+  /* ============================================================
+     THE TREE
+     ============================================================ */
+
+  let art = null;
+  (function loadTree() {
+    const img = new Image();
+    img.decoding = "async";
+    img.onload = () => { art = img; tree.classList.add("ready"); };
+    img.onerror = () => {
+      if (img.src.indexOf(SMALL) === -1) { img.src = SMALL; return; }
+    };
+    img.src = (window.innerWidth <= 700 || (window.devicePixelRatio || 1) < 2)
+      ? SMALL : FULL;
+  })();
+
+  /* Full bleed across, and the doorway held just above the middle so
+     that it is the first thing seen and nothing has to sit on top of
+     it. The tree is a tall picture and the door is three quarters of
+     the way down it, so holding the door that high means the roots run
+     off the bottom of the screen — which is where the words stand, in
+     the dark, rather than over the artwork. */
+  const DOOR_AT = 0.44;
+
+  function frame(zoom) {
+    const cover = Math.max(W / art.width, H / art.height) * zoom;
+    const w = art.width * cover, h = art.height * cover;
+    const y = Math.min(0, H * DOOR_AT - h * AIM.y);
+    return { x: (W - w) / 2, y, w, h };
+  }
+
+  /* the wash that holds the picture back so the words on it can be
+     read — the same every frame, so painted once */
+  let hush = null;
+  function bakeHush() {
+    const ow = Math.max(2, Math.round(W / 3)), oh = Math.max(2, Math.round(H / 3));
+    hush = document.createElement("canvas");
+    hush.width = ow; hush.height = oh;
+    const g = hush.getContext("2d");
+
+    const vig = g.createRadialGradient(ow / 2, oh * 0.5, Math.min(ow, oh) * 0.24,
+                                       ow / 2, oh * 0.5, Math.hypot(ow, oh) * 0.6);
+    vig.addColorStop(0,   "rgba(3,1,10,0)");
+    vig.addColorStop(0.7, "rgba(3,1,10,0.3)");
+    vig.addColorStop(1,   "rgba(3,1,10,0.86)");
+    g.fillStyle = vig;
+    g.fillRect(0, 0, ow, oh);
+
+    const scrim = g.createLinearGradient(0, oh * 0.5, 0, oh);
+    scrim.addColorStop(0,   "rgba(3,1,10,0)");
+    scrim.addColorStop(0.5, "rgba(3,1,10,0.5)");
+    scrim.addColorStop(1,   "rgba(3,1,10,0.88)");
+    g.fillStyle = scrim;
+    g.fillRect(0, oh * 0.5, ow, oh * 0.5);
+  }
+
+  /* ---------- what moves in the air ---------- */
+  let flies = [], streaks = [], nextStreak = 2;
+
+  function seedAir() {
+    flies = [];
+    const n = Math.min(54, Math.round((W * H) / 17000));
+    for (let i = 0; i < n; i++) {
+      flies.push({
+        x: Math.random(), y: rand(0.1, 1.05),
+        r: rand(0.7, 2.2),
+        vy: rand(0.004, 0.02),
+        drift: rand(0, 6.3),
+        tw: rand(0.6, 2.4),
+        hue: rand(38, 62)
+      });
+    }
+  }
+
+  /* light finding its way through the leaves */
+  function fireStreak() {
+    streaks.push({
+      x: rand(0.05, 0.95), y: rand(-0.02, 0.36),
+      vx: rand(-0.5, 0.5), vy: rand(0.14, 0.34),
+      life: 0, span: rand(0.7, 1.3),
+      hue: rand(44, 190)
+    });
+  }
+
+  let zoomed = false;          // true while the picture is being rushed into
+  function glow(g, x, y, r, hue, alpha, light) {
+    if (alpha <= 0.004 || r <= 0) return;
+    if (!zoomed && (x + r < 0 || x - r > W || y + r < 0 || y - r > H)) return;
+    const gr = g.createRadialGradient(x, y, 0, x, y, r);
+    gr.addColorStop(0,    `hsla(${hue},100%,${light || 80}%,${alpha})`);
+    gr.addColorStop(0.36, `hsla(${hue},100%,64%,${alpha * 0.34})`);
+    gr.addColorStop(1,    "hsla(0,0%,0%,0)");
+    g.fillStyle = gr;
+    g.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+
+  /* ---------- one frame of the tree ---------- */
+  function paintTree(t, dt, pull) {
+    tc.setTransform(DPR, 0, 0, DPR, 0, 0);
+    tc.clearRect(0, 0, W, H);
+    if (!art) return;
+
+    /* standing in front of it, not looking at a photograph */
+    const breathe = 1 + 0.028 * (0.5 + 0.5 * Math.sin(t * 0.14));
+    const rush = 1 + 17 * pull * pull * pull;      // and then, the doorway
+    const { x, y, w, h } = frame(breathe);
+
+    const ax = x + w * AIM.x, ay = y + h * AIM.y;
+
+    tc.save();
+    zoomed = pull > 0;
+    if (pull > 0) {
+      tc.translate(ax, ay); tc.scale(rush, rush); tc.translate(-ax, -ay);
+      tc.globalAlpha = Math.max(0, 1 - Math.pow(pull, 2.4));
+    }
+    tc.drawImage(art, x, y, w, h);
+
+    /* ---------- light ---------- */
+    tc.globalCompositeOperation = "lighter";
+
+    // the sun, flaring through the canopy
+    const sx = x + w * SUN.x, sy = y + h * SUN.y;
+    const flare = 0.34 + 0.12 * Math.sin(t * 0.7) + 0.05 * Math.sin(t * 2.3);
+    glow(tc, sx, sy, w * 0.26, 48, flare * 0.42, 92);
+    glow(tc, sx, sy, w * 0.07, 54, flare, 99);
+
+    tc.strokeStyle = `hsla(50,100%,92%,${0.13 * flare})`;
+    tc.lineWidth = 1.4;
+    for (let k = 0; k < 10; k++) {
+      const ang = (k / 10) * Math.PI * 2 + t * 0.04;
+      const len = w * (0.14 + 0.07 * Math.sin(t * 1.3 + k));
+      tc.beginPath();
+      tc.moveTo(sx + Math.cos(ang) * w * 0.03, sy + Math.sin(ang) * w * 0.03);
+      tc.lineTo(sx + Math.cos(ang) * len, sy + Math.sin(ang) * len);
+      tc.stroke();
+    }
+
+    // the doorway, breathing, in the tunnel's own colours
+    const door = 0.42 + 0.2 * Math.sin(t * 0.55) + 0.07 * Math.sin(t * 1.9);
+    const open = door + pull * 2.2;
+    glow(tc, ax, ay, w * 0.26, 282, open * 0.3, 74);
+    glow(tc, ax, ay, w * 0.10, 172, open * 0.5, 86);
+    glow(tc, ax, ay, w * 0.04, 300, open, 96);
+
+    tc.globalCompositeOperation = "source-over";
+
+    /* where the picture ends, let it fall away into the dark rather
+       than stopping on a line */
+    const foot = y + h;
+    if (foot < H + 1) {
+      const fade = tc.createLinearGradient(0, foot - h * 0.1, 0, foot);
+      fade.addColorStop(0, "rgba(3,1,10,0)");
+      fade.addColorStop(1, "rgba(3,1,10,1)");
+      tc.fillStyle = fade;
+      tc.fillRect(x, foot - h * 0.1, w, h * 0.1 + 1);
+      tc.fillStyle = "#03010a";
+      tc.fillRect(0, foot, W, H - foot + 1);
+    }
+
+    tc.restore();
+
+    /* ---------- the air between you and the tree ----------
+       Drawn after the picture is put back, in plain screen space: none
+       of this should rush into the doorway with the tree, and at
+       seventeen times its size a firefly would be a saucer. */
+    const air = Math.max(0, 1 - pull * 2.4);
+    if (air > 0.01) {
+      tc.globalCompositeOperation = "lighter";
+
+      // light moving across the leaves
+      for (let k = 0; k < 2; k++) {
+        const bxp = (((t * 0.028 + k / 2) % 1) * 1.7 - 0.35) * W;
+        const half = W * 0.26;
+        const l = Math.max(0, bxp - half), r2 = Math.min(W, bxp + half);
+        if (r2 > l) {
+          const sw = tc.createLinearGradient(bxp - half, 0, bxp + half, H);
+          sw.addColorStop(0,   "hsla(0,0%,0%,0)");
+          sw.addColorStop(0.5, `hsla(${64 + k * 40},100%,76%,${0.05 * air})`);
+          sw.addColorStop(1,   "hsla(0,0%,0%,0)");
+          tc.fillStyle = sw;
+          tc.fillRect(l, 0, r2 - l, H);
+        }
+      }
+
+      // light finding its way through the leaves, now and then
+      nextStreak -= dt;
+      if (nextStreak <= 0) { fireStreak(); nextStreak = rand(1.6, 4.4); }
+      for (let i = streaks.length - 1; i >= 0; i--) {
+        const s2 = streaks[i];
+        s2.life += dt; s2.x += s2.vx * dt; s2.y += s2.vy * dt;
+        if (s2.life > s2.span) { streaks.splice(i, 1); continue; }
+        const fade = Math.sin((s2.life / s2.span) * Math.PI) * air;
+        const hx = s2.x * W, hy = s2.y * H;
+        const tx2 = hx - s2.vx * W * 0.16, ty2 = hy - s2.vy * H * 0.16;
+        const tail = tc.createLinearGradient(hx, hy, tx2, ty2);
+        tail.addColorStop(0, `hsla(${s2.hue},100%,92%,${0.7 * fade})`);
+        tail.addColorStop(1, "hsla(0,0%,0%,0)");
+        tc.strokeStyle = tail;
+        tc.lineWidth = 2;
+        tc.beginPath(); tc.moveTo(hx, hy); tc.lineTo(tx2, ty2); tc.stroke();
+      }
+
+      // fireflies
+      for (const f of flies) {
+        f.y -= f.vy * dt;
+        if (f.y < -0.03) { f.y = 1.03; f.x = Math.random(); }
+        const fx = (f.x + Math.sin(t * 0.3 + f.drift) * 0.014) * W;
+        const fy = f.y * H;
+        const on = 0.2 + 0.8 * Math.abs(Math.sin(t * f.tw + f.drift));
+        tc.fillStyle = `hsla(${f.hue},100%,80%,${on * 0.55 * air})`;
+        tc.beginPath(); tc.arc(fx, fy, f.r, 0, Math.PI * 2); tc.fill();
+      }
+
+      tc.globalCompositeOperation = "source-over";
+    }
+
+    if (hush) tc.drawImage(hush, 0, 0, W, H);
+  }
+
+
+  /* ============================================================
+     THE TUNNEL
+     ============================================================ */
+
   function polygon(g, rr, sides, rot) {
     g.beginPath();
     for (let i = 0; i <= sides; i++) {
@@ -66,7 +317,7 @@
     const rr = Math.pow(f, 2.0) * R * 1.65;
     if (rr < 1.5) return;
 
-    const fade  = Math.min(1, f * 4) * (1 - f) * 2.1 * intensity;
+    const fade = Math.min(1, f * 4) * (1 - f) * 2.1 * intensity;
     if (fade <= 0.01) return;
     const sides = 3 + (k % 10);
     const rot   = t * 0.22 * (k % 2 ? 1 : -1) + k * 0.37;
@@ -78,7 +329,6 @@
 
     if (detail < 1) return;
 
-    // a counter-turning polygon nested inside
     g.strokeStyle = `hsla(${hue + k * 23 + 150},100%,64%,${0.4 * fade})`;
     g.lineWidth = 0.6 + f * 2.4;
     polygon(g, rr * 0.72, sides + 2, -rot * 1.5);
@@ -86,7 +336,6 @@
 
     if (detail < 2) return;
 
-    // spokes out to the ring
     g.beginPath();
     for (let i = 0; i < sides; i++) {
       const ang = (i / sides) * Math.PI * 2 + rot;
@@ -99,7 +348,6 @@
 
     if (detail < 3) return;
 
-    // nodes at every vertex
     g.beginPath();
     for (let i = 0; i < sides; i++) {
       const ang = (i / sides) * Math.PI * 2 + rot;
@@ -113,243 +361,33 @@
     g.stroke();
   }
 
-
-  /* ============================================================
-     THE SKY BEHIND THE GATE
-     Smoke, stars, the occasional falling one, and things that pass.
-     ============================================================ */
-
-  const rand = (a, b) => a + Math.random() * (b - a);
-
-  /* --- stars --- */
-  let stars = [];
-  function seedStars() {
-    stars = [];
-    const n = Math.round((W * H) / 9000);
-    for (let i = 0; i < Math.min(180, n); i++) {
-      stars.push({
-        x: Math.random(), y: Math.random(),
-        r: rand(0.4, 1.5),
-        tw: rand(0.4, 2.2), ph: rand(0, 6.3),
-        hue: rand(180, 300)
-      });
-    }
-  }
-
-  /* --- smoke: slow clouds drifting across --- */
-  const PUFFS = 7;
-  const puffs = [];
-  function seedSmoke() {
-    puffs.length = 0;
-    for (let i = 0; i < PUFFS; i++) {
-      puffs.push({
-        x: Math.random(), y: rand(0.1, 0.95),
-        r: rand(0.26, 0.6),
-        vx: rand(0.004, 0.018) * (Math.random() < 0.5 ? -1 : 1),
-        drift: rand(0, 6.3),
-        hue: rand(250, 300),
-        a: rand(0.13, 0.28)
-      });
-    }
-  }
-
-  /* --- shooting stars --- */
-  const shots = [];
-  let nextShot = 1.2;
-  function fireShot() {
-    const fromLeft = Math.random() < 0.5;
-    shots.push({
-      x: fromLeft ? rand(-0.1, 0.4) : rand(0.6, 1.1),
-      y: rand(-0.05, 0.5),
-      vx: (fromLeft ? 1 : -1) * rand(0.35, 0.62),
-      vy: rand(0.18, 0.4),
-      life: 0, span: rand(0.9, 1.5),
-      hue: rand(170, 290)
-    });
-  }
-
-  /* --- things that pass --- */
-  const ufos = [];
-  let nextUfo = 4;
-  function sendUfo() {
-    const fromLeft = Math.random() < 0.5;
-    ufos.push({
-      x: fromLeft ? -0.16 : 1.16,
-      y: rand(0.08, 0.72),
-      vx: (fromLeft ? 1 : -1) * rand(0.018, 0.045),
-      bob: rand(0, 6.3),
-      size: rand(0.03, 0.062),
-      hue: rand(160, 300),
-      beam: Math.random() < 0.35
-    });
-  }
-
-  function drawUfo(g, u, t) {
-    const x = u.x * W;
-    const y = (u.y + Math.sin(t * 0.8 + u.bob) * 0.012) * H;
-    const w = u.size * W, h = w * 0.3;
-
-    if (u.beam) {                                   // a shaft of light below
-      const bg = g.createLinearGradient(x, y, x, y + h * 9);
-      bg.addColorStop(0, `hsla(${u.hue},100%,70%,0.24)`);
-      bg.addColorStop(1, "hsla(0,0%,0%,0)");
-      g.fillStyle = bg;
-      g.beginPath();
-      g.moveTo(x - w * 0.26, y + h * 0.4);
-      g.lineTo(x + w * 0.26, y + h * 0.4);
-      g.lineTo(x + w * 1.05, y + h * 9);
-      g.lineTo(x - w * 1.05, y + h * 9);
-      g.closePath(); g.fill();
-    }
-
-    const halo = g.createRadialGradient(x, y, 0, x, y, w * 1.5);
-    halo.addColorStop(0, `hsla(${u.hue},100%,70%,0.3)`);
-    halo.addColorStop(1, "hsla(0,0%,0%,0)");
-    g.fillStyle = halo;
-    g.fillRect(x - w * 1.5, y - w * 1.5, w * 3, w * 3);
-
-    g.fillStyle = `hsla(${u.hue},70%,62%,0.85)`;    // hull
-    g.beginPath(); g.ellipse(x, y, w * 0.5, h * 0.5, 0, 0, Math.PI * 2); g.fill();
-    g.fillStyle = `hsla(${u.hue + 30},100%,82%,0.9)`; // dome
-    g.beginPath(); g.ellipse(x, y - h * 0.34, w * 0.2, h * 0.5, 0, Math.PI, 0); g.fill();
-
-    for (let i = 0; i < 4; i++) {                    // running lights
-      const lx = x - w * 0.3 + i * (w * 0.2);
-      const on = 0.4 + 0.6 * Math.abs(Math.sin(t * 3 + i * 1.3 + u.bob));
-      g.fillStyle = `hsla(${u.hue + i * 40},100%,75%,${on})`;
-      g.beginPath(); g.arc(lx, y + h * 0.3, w * 0.035, 0, Math.PI * 2); g.fill();
-    }
-  }
-
-  function paintAmbient(t, dt) {
+  function paintTunnel(t) {
     const g = fc;
-    const lift = phase === "options" ? 1.5 : 1;
-
-    g.setTransform(SC, 0, 0, SC, 0, 0);
-    g.fillStyle = "#000";
-    g.fillRect(0, 0, W, H);
-    g.globalCompositeOperation = "lighter";
-
-    // smoke
-    for (const p of puffs) {
-      p.x += p.vx * dt * 0.001;
-      if (p.x < -0.6) p.x = 1.6; if (p.x > 1.6) p.x = -0.6;
-      const px = p.x * W;
-      const py = (p.y + Math.sin(t * 0.14 + p.drift) * 0.02) * H;
-      const r  = p.r * Math.max(W, H) * (1 + Math.sin(t * 0.1 + p.drift) * 0.08);
-      const grad = g.createRadialGradient(px, py, 0, px, py, r);
-      grad.addColorStop(0,   `hsla(${p.hue},90%,52%,${p.a * lift})`);
-      grad.addColorStop(0.5, `hsla(${p.hue + 40},90%,44%,${p.a * 0.4 * lift})`);
-      grad.addColorStop(1,   "hsla(0,0%,0%,0)");
-      g.fillStyle = grad;
-      g.fillRect(px - r, py - r, r * 2, r * 2);
-    }
-
-    // stars
-    for (const st of stars) {
-      const a = 0.34 + 0.66 * Math.abs(Math.sin(t * st.tw + st.ph));
-      g.fillStyle = `hsla(${st.hue},80%,88%,${a * lift})`;
-      g.beginPath();
-      g.arc(st.x * W, st.y * H, st.r, 0, Math.PI * 2);
-      g.fill();
-    }
-
-    // falling stars
-    nextShot -= dt * 0.001;
-    if (nextShot <= 0) { fireShot(); nextShot = rand(1.1, 3.2); }
-    for (let i = shots.length - 1; i >= 0; i--) {
-      const sh = shots[i];
-      sh.life += dt * 0.001;
-      sh.x += sh.vx * dt * 0.001;
-      sh.y += sh.vy * dt * 0.001;
-      if (sh.life > sh.span) { shots.splice(i, 1); continue; }
-
-      const fade = 1 - sh.life / sh.span;
-      const hx = sh.x * W, hy = sh.y * H;
-      const tx = hx - sh.vx * W * 0.13, ty = hy - sh.vy * H * 0.13;
-      const tail = g.createLinearGradient(hx, hy, tx, ty);
-      tail.addColorStop(0, `hsla(${sh.hue},100%,90%,${0.95 * fade * lift})`);
-      tail.addColorStop(1, "hsla(0,0%,0%,0)");
-      g.strokeStyle = tail;
-      g.lineWidth = 2.2;
-      g.beginPath(); g.moveTo(hx, hy); g.lineTo(tx, ty); g.stroke();
-
-      const head = g.createRadialGradient(hx, hy, 0, hx, hy, 12);
-      head.addColorStop(0, `hsla(${sh.hue},100%,96%,${fade})`);
-      head.addColorStop(1, "hsla(0,0%,0%,0)");
-      g.fillStyle = head;
-      g.fillRect(hx - 12, hy - 12, 24, 24);
-    }
-
-    // passers-by
-    nextUfo -= dt * 0.001;
-    if (nextUfo <= 0 && ufos.length < 2) { sendUfo(); nextUfo = rand(7, 17); }
-    for (let i = ufos.length - 1; i >= 0; i--) {
-      const u = ufos[i];
-      u.x += u.vx * dt * 0.001;
-      if (u.x < -0.3 || u.x > 1.3) { ufos.splice(i, 1); continue; }
-      drawUfo(g, u, t);
-    }
-
-    g.globalCompositeOperation = "source-over";
-
-    // hold the edges down so the being stays the brightest thing here
-    const cx2 = W / 2, cy2 = H / 2, RR = Math.hypot(W, H) * 0.6;
-    const vig = g.createRadialGradient(cx2, cy2, Math.min(W, H) * 0.2, cx2, cy2, RR);
-    vig.addColorStop(0,   "rgba(0,0,0,0)");
-    vig.addColorStop(0.68,"rgba(0,0,0,0.3)");
-    vig.addColorStop(1,   "rgba(0,0,0,0.82)");
-    g.fillStyle = vig;
-    g.fillRect(0, 0, W, H);
-  }
-
-  /* ---------- the frame ---------- */
-  function paint(t, dt) {
-    if (phase !== "tunnel") {
-      paintAmbient(t, dt);
-      ctx.drawImage(front, 0, 0, W, H);
-      const tf0 = front, tc0 = fc;
-      front = back; fc = bc; back = tf0; bc = tc0;
-      return;
-    }
-
-    const g = fc;
-
-    // how hard we are pushing right now
-    const rush = phase === "tunnel"
-      ? Math.min(1, (performance.now() - phaseAt) / TUNNEL_MS)
-      : 0;
-
-    const intensity = phase === "gate"    ? (gate && gate.classList.contains("gone") ? 0.55 : 0.05)
-                    : phase === "options" ? 0.62
-                    : 0.75 + rush * 0.9;
-
-    const speed = phase === "tunnel" ? 0.28 + rush * rush * 2.6 : 0.13;
-    const hue   = t * (phase === "tunnel" ? 70 + rush * 190 : 24);
+    const rush = Math.min(1, (performance.now() - phaseAt) / TUNNEL_MS);
+    const intensity = 0.75 + rush * 0.9;
+    const speed = 0.28 + rush * rush * 2.6;
+    const hue   = t * (70 + rush * 190);
 
     // feedback: last frame, scaled up, underneath everything
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.clearRect(0, 0, front.width, front.height);
-    g.globalAlpha = phase === "tunnel" ? 0.66 + rush * 0.12 : 0.62;
-    const zoom = 1 + (phase === "tunnel" ? 0.028 + rush * 0.05 : 0.012);
+    g.globalAlpha = 0.66 + rush * 0.12;
+    const zoom = 1 + 0.028 + rush * 0.05;
     const dw = front.width * zoom, dh = front.height * zoom;
     g.drawImage(back, (front.width - dw) / 2, (front.height - dh) / 2, dw, dh);
     g.globalAlpha = 1;
     g.setTransform(SC, 0, 0, SC, 0, 0);
 
     // darken what carried over, so trails decay instead of smearing white
-    g.fillStyle = `rgba(0,0,0,${phase === "tunnel" ? 0.26 : 0.2})`;
+    g.fillStyle = "rgba(0,0,0,0.26)";
     g.fillRect(0, 0, W, H);
 
     g.globalCompositeOperation = "lighter";
     g.lineCap = "round";
 
-    const RINGS  = Math.round((phase === "tunnel" ? 46 : 20) * quality);
-    const SYM    = phase === "tunnel" ? Math.round(2 + 5 * quality) : 3;
-    const detail = phase === "tunnel"
-      ? (quality > 0.85 ? 3 : quality > 0.6 ? 2 : quality > 0.4 ? 1 : 0)
-      : (quality > 0.7 ? 1 : 0);
-
+    const RINGS  = Math.round(46 * quality);
+    const SYM    = Math.round(2 + 5 * quality);
+    const detail = quality > 0.85 ? 3 : quality > 0.6 ? 2 : quality > 0.4 ? 1 : 0;
     const z = (t * speed) % 1;
 
     g.save();
@@ -376,243 +414,50 @@
 
     g.globalCompositeOperation = "source-over";
 
-    // hold the edges down so text stays readable
     const vig = g.createRadialGradient(cx, cy, Math.min(W, H) * 0.12, cx, cy, R);
-    const edge = phase === "gate" ? 0.99 : 0.88;
-    vig.addColorStop(0,    "rgba(0,0,0,0)");
-    vig.addColorStop(0.6,  `rgba(0,0,0,${edge * (phase === "gate" ? 0.88 : 0.42)})`);
-    vig.addColorStop(1,    `rgba(0,0,0,${edge})`);
+    vig.addColorStop(0,   "rgba(0,0,0,0)");
+    vig.addColorStop(0.6, "rgba(0,0,0,0.37)");
+    vig.addColorStop(1,   "rgba(0,0,0,0.88)");
     g.fillStyle = vig;
     g.fillRect(0, 0, W, H);
 
     // blit and swap
     ctx.drawImage(front, 0, 0, W, H);
-    const tf = front, tc = fc;
+    const tf = front, tcx = fc;
     front = back; fc = bc;
-    back = tf;   bc = tc;
+    back = tf;   bc = tcx;
   }
+
 
   /* ---------- the loop, with its own quality governor ---------- */
   let last = performance.now(), acc = 0, frames = 0;
+  let pull = 0, pullFrom = 0;
 
   function loop(now) {
     requestAnimationFrame(loop);
     if (document.hidden) { last = now; return; }
 
-    const dt = now - last;
+    const dt = Math.min(0.06, (now - last) * 0.001);
+    if (now - last > 400) { last = now; return; }   // came back from the background
     last = now;
-    if (dt > 400) return;                       // came back from the background
+    const t = now * 0.001;
 
-    paint(now * 0.001, dt);
+    if (phase === "tunnel" || phase === "options") paintTunnel(t);
+    if (phase !== "options") {
+      if (pullFrom) pull = Math.min(1, (now - pullFrom) / SWALLOW_MS);
+      paintTree(t, dt, pull);
+      if (pull >= 1 && tree.style.display !== "none") tree.style.display = "none";
+    }
 
     /* Push the detail up while frames are cheap, back off when they are
        not. Checked over a handful of frames so it doesn't thrash. */
-    acc += dt; frames++;
+    acc += dt * 1000; frames++;
     if (frames >= 12) {
       const avg = acc / frames;
       acc = 0; frames = 0;
-      if (avg < 15 && quality < 1)      quality = Math.min(1, quality + 0.08);
+      if (avg < 15 && quality < 1)        quality = Math.min(1, quality + 0.08);
       else if (avg > 26 && quality > 0.3) quality = Math.max(0.3, quality - 0.12);
     }
-  }
-
-  /* ---------- the gatekeeper ---------- */
-  const keeper = document.getElementById("keeper");
-  let art = null, kc = null, MX = 0, MY = 0;
-
-  if (keeper && window.RealmCreature) {
-    kc = keeper.getContext("2d");
-    RealmCreature.load(img => {
-      art = img;                                  // black already cut away
-      keeper.width = art.width; keeper.height = art.height;
-      MX = keeper.width  * RealmCreature.MOUTH.x;
-      MY = keeper.height * RealmCreature.MOUTH.y;
-      drawKeeper(0, 0);
-      keeper.classList.add("ready");
-      if (!still) requestAnimationFrame(ripple);
-    }, () => { if (keeper) keeper.style.display = "none"; });
-  }
-
-  /* ---------- the being will not hold still ----------
-     Drawn as a stack of horizontal slices, each slid sideways by its
-     own travelling wave. That is what makes it look like it is seen
-     through moving water rather than simply scaled. */
-  const SLICES = 130;
-
-  function drawKeeper(t, zoom) {
-    if (!kc || !art) return;
-    const w = keeper.width, h = keeper.height;
-    const sh = h / SLICES;
-
-    kc.setTransform(1, 0, 0, 1, 0, 0);
-    kc.clearRect(0, 0, w, h);
-
-    if (zoom > 0) {
-      const s = 1 + 15 * zoom * zoom * zoom;
-      kc.globalAlpha = Math.max(0, 1 - Math.pow(zoom, 2.6));
-      kc.translate(MX, MY); kc.scale(s, s); kc.translate(-MX, -MY);
-    }
-
-    // the warp eases off as you are pulled in
-    const amp  = (w * 0.009) * (1 - zoom);
-    const roll = (w * 0.003) * (1 - zoom);
-
-    /* Each slice is drawn a little wider than the frame. Without that
-       overscan, a slice sliding sideways leaves a bare strip at the
-       edge of the picture. */
-    const over = amp * 2.2 + roll * 2.2 + 2;
-
-    /* Slices only ever move sideways. Shifting them vertically tears
-       gaps between them, which is what read as glitching. The waves are
-       kept low-frequency for the same reason: neighbouring slices have
-       to stay close or the edge between them becomes visible. */
-    for (let i = 0; i < SLICES; i++) {
-      const sy = i * sh;
-      const f  = i / SLICES;
-      const dx = Math.sin(f * 3.1 + t * 0.9) * amp
-               + Math.sin(f * 5.4 - t * 0.52) * roll;
-      kc.drawImage(art, 0, sy, w, sh + 1.5,
-                   dx - over, sy, w + over * 2, sh + 1.5);
-    }
-
-    kc.setTransform(1, 0, 0, 1, 0, 0);
-    kc.globalAlpha = 1;
-  }
-
-  let rlast = 0;
-  function ripple(ms) {
-    if (phase !== "gate" || swallowing) return;   // the swallow takes over
-    if (!document.hidden && ms - rlast > 32) { // 30fps is plenty for a drift
-      rlast = ms;
-      drawKeeper(ms * 0.001, 0);
-    }
-    requestAnimationFrame(ripple);
-  }
-
-  /* ---------- being swallowed ----------
-     Until now the picture lives in a canvas the size of the picture,
-     sitting in the middle of the screen. Zooming inside that canvas
-     fills it edge to edge with bright pixels, and its edges then read
-     as a box pasted on the sky.
-
-     So the moment the pull starts, the canvas is stretched to cover the
-     whole gate and the picture is drawn into the rectangle it was
-     already occupying — the first frame is identical — and from there
-     the zoom has the entire screen to grow into.
-
-     The zoom stays INSIDE the canvas. Scaling the element with CSS asks
-     the browser to rasterise a layer thousands of pixels across, which
-     locks a phone up for seconds; redrawing the baked picture costs the
-     same every frame however far in we are. */
-  let sw = null;                 // the picture's box, in canvas pixels
-  let swallowing = false;
-
-  function beginSwallow() {
-    if (!kc || !art) return;
-    swallowing = true;
-
-    const r = keeper.getBoundingClientRect();     // where the art is now
-
-    /* hold the wrapper's box so the door and the creed don't jump as the
-       canvas leaves the flow underneath them */
-    const wrap = keeper.parentElement;
-    if (wrap) {
-      wrap.style.height = wrap.getBoundingClientRect().height + "px";
-      wrap.style.position = "static";
-    }
-
-    keeper.classList.add("full");
-    const f = keeper.getBoundingClientRect();     // the box it covers now
-
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    keeper.width  = Math.max(1, Math.round(f.width  * dpr));
-    keeper.height = Math.max(1, Math.round(f.height * dpr));
-
-    sw = {
-      x: (r.left - f.left) * dpr, y: (r.top - f.top) * dpr,
-      w: r.width * dpr,           h: r.height * dpr
-    };
-  }
-
-  /* The CSS mask that stops the art reading as a pasted rectangle is in
-     element space, so it cannot come along for the ride. The same two
-     shapes are cut into the canvas instead, under the same transform as
-     the picture: a soft oval, and a fade top and bottom. */
-  function feather(x, y, w, h) {
-    kc.globalAlpha = 1;
-    kc.globalCompositeOperation = "destination-out";
-
-    const rx = w * 0.86, ry = h * 0.84;
-    kc.save();
-    kc.translate(x + w * 0.5, y + h * 0.48);
-    kc.scale(1, ry / rx);
-    const oval = kc.createRadialGradient(0, 0, rx * 0.52, 0, 0, rx);
-    oval.addColorStop(0, "rgba(0,0,0,0)");
-    oval.addColorStop(1, "rgba(0,0,0,1)");
-    kc.fillStyle = oval;
-    kc.fillRect(-rx * 2, -rx * 2, rx * 4, rx * 4);
-    kc.restore();
-
-    const ends = kc.createLinearGradient(0, y, 0, y + h);
-    ends.addColorStop(0,    "rgba(0,0,0,1)");
-    ends.addColorStop(0.07, "rgba(0,0,0,0)");
-    ends.addColorStop(0.93, "rgba(0,0,0,0)");
-    ends.addColorStop(1,    "rgba(0,0,0,1)");
-    kc.fillStyle = ends;
-    kc.fillRect(x, y, w, h);
-
-    kc.globalCompositeOperation = "source-over";
-  }
-
-  function swallow(p) {
-    if (!kc || !art || !sw) return;
-    const t = performance.now() * 0.001;
-
-    kc.setTransform(1, 0, 0, 1, 0, 0);
-    kc.clearRect(0, 0, keeper.width, keeper.height);
-
-    // the mouth, in this canvas's own pixels
-    const mx = sw.x + sw.w * RealmCreature.MOUTH.x;
-    const my = sw.y + sw.h * RealmCreature.MOUTH.y;
-
-    const s = 1 + 15 * p * p * p;
-    kc.translate(mx, my); kc.scale(s, s); kc.translate(-mx, -my);
-    kc.globalAlpha = Math.max(0, 1 - Math.pow(p, 2.6));
-
-    /* The warp is 130 separate draws, and every join between them shows
-       as a line once the picture is several times its own size. So the
-       warp is spent early, while the picture is still near its own
-       scale, and after that it is one single draw with nothing to join.
-       Every term dies with `ease`, so the two paths meet exactly and
-       there is no moment where the seams visibly vanish. */
-    const ease = Math.max(0, 1 - p / 0.35);
-
-    if (ease <= 0) {
-      kc.drawImage(art, sw.x, sw.y, sw.w, sw.h);
-    } else {
-      const aw = art.width, ah = art.height;
-      const src = ah / SLICES;
-      const k   = sw.h / ah;        // picture pixels -> canvas pixels
-      const e2  = ease * ease;
-
-      const amp  = (sw.w * 0.009) * e2;
-      const roll = (sw.w * 0.003) * e2;
-      const over = amp * 2.2 + roll * 2.2 + 2 * e2;
-
-      for (let i = 0; i < SLICES; i++) {
-        const f  = i / SLICES;
-        const dx = Math.sin(f * 3.1 + t * 0.9) * amp
-                 + Math.sin(f * 5.4 - t * 0.52) * roll;
-        kc.drawImage(art, 0, i * src, aw, src + 2,
-                     sw.x + dx - over, sw.y + i * src * k,
-                     sw.w + over * 2, (src + 2) * k);
-      }
-    }
-
-    feather(sw.x, sw.y, sw.w, sw.h);
-
-    kc.setTransform(1, 0, 0, 1, 0, 0);
-    kc.globalAlpha = 1;
   }
 
   /* ---------- states ---------- */
@@ -624,8 +469,8 @@
     phaseAt = performance.now();
     document.body.dataset.phase = next;
     if (next === "tunnel") {
-      /* The feedback buffers still hold the lit sky. Feeding that
-         forward is what bleached the tunnel to grey. */
+      /* the buffers still hold whatever was there; feeding that forward
+         is what bleached the tunnel to grey */
       for (const [cv, cx2] of [[A, a], [B, b]]) {
         cx2.setTransform(1, 0, 0, 1, 0, 0);
         cx2.fillStyle = "#000";
@@ -635,29 +480,18 @@
     }
   }
 
-  const SWALLOW_MS = 1150;          // how long the mouth takes to take you
-
   function enter() {
     if (phase !== "gate") return;
-    if (still) { gate.classList.add("gone"); land(); return; }
-
-    beginSwallow();                 // measure first: the class below moves it
     gate.classList.add("gone");
-
-    const t0 = performance.now();
-    (function pull(now) {
-      const p = Math.min(1, (now - t0) / SWALLOW_MS);
-      swallow(p);
-      if (p < 1) requestAnimationFrame(pull);
-      else if (gate) gate.style.display = "none";
-    })(t0);
-
-    setTimeout(() => go("tunnel"), SWALLOW_MS * 0.62);
+    if (still) { land(); return; }
+    pullFrom = performance.now();
+    setTimeout(() => go("tunnel"), SWALLOW_MS * 0.58);
     setTimeout(land, SWALLOW_MS + TUNNEL_MS);
   }
 
   function land() {
     go("options");
+    if (gate) gate.style.display = "none";
     if (!journey) return;
     journey.hidden = false;
     if (window.RealmJourney && RealmJourney.start) RealmJourney.start();

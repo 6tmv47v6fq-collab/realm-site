@@ -18,21 +18,24 @@
 
 <canvas id="sky" aria-hidden="true"></canvas>
 
-<!-- the door -->
+<!-- the door in the tree -->
 <main class="gate">
-  <div class="keeper"><canvas id="keeper"></canvas></div>
-  <button id="enter" class="enter" type="button">
-    <span class="enter-in">Enter the realm</span>
-  </button>
-  <p class="creed">10 sectors &middot; 1,110 beings</p>
+  <canvas id="tree" aria-hidden="true"></canvas>
 
-  <!-- what a stranger needs to know, all of it from data.js -->
-  <dl class="standing">
-    <div><dt>Open now</dt><dd id="st-chapter"></dd></div>
-    <div><dt>Taken</dt><dd id="st-supply"></dd></div>
-    <div><dt>Mint</dt><dd id="st-status"></dd></div>
-  </dl>
-  <p class="terms">Solana &middot; 3 per wallet &middot; sealed until reveal</p>
+  <div class="gate-in">
+    <button id="enter" class="enter" type="button">
+      <span class="enter-in">Enter the realm</span>
+    </button>
+    <p class="creed">10 sectors &middot; 1,110 beings</p>
+
+    <!-- what a stranger needs to know, all of it from data.js -->
+    <dl class="standing">
+      <div><dt>Open now</dt><dd id="st-chapter"></dd></div>
+      <div><dt>Taken</dt><dd id="st-supply"></dd></div>
+      <div><dt>Mint</dt><dd id="st-status"></dd></div>
+    </dl>
+    <p class="terms">Solana &middot; 3 per wallet &middot; sealed until reveal</p>
+  </div>
 </main>
 
 <!-- where you come out: the chamber -->
@@ -151,7 +154,6 @@
   </div>
 </section>
 
-<script src="creature.js"></script>
 <script src="gate.js"></script>
 <script src="data.js"></script>
 <script src="forms.js"></script>
