@@ -15,7 +15,7 @@ const CONFIG = {
 
   // Social + marketplace links.
   links: {
-    x: "https://x.com/",
+    x: "https://x.com/dmt_realm",
     telegram: "https://t.me/",
     marketplace: ""
   },
