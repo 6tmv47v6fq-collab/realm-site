@@ -92,10 +92,24 @@ Set `EXTRA_IN_FINAL_ROUND` to 0 and everything on the site goes back to 1,110
 on its own — the door, the FAQ, the rounds list and the mint counter all read
 from it.
 
-### Social links
+### The top bar, and the X link
 
-A link only appears once it is real. The placeholders (`https://x.com/`,
-`https://t.me/`) are treated as blanks and stay hidden.
+The bar across the top reads REALM and then whatever `TOKEN_NAME` is set to
+in `data.js`. The links on the right come from `CONFIG.links`.
+
+**A link only appears once it goes somewhere.** The placeholders
+(`https://x.com/`, `https://t.me/`) are treated as blanks and stay hidden,
+so nobody is sent to an empty profile. To show the X link, put the real
+address in:
+
+```js
+links: {
+  x: "https://x.com/yourhandle",
+  ...
+}
+```
+
+Telegram and a marketplace link appear the same way when they are real.
 
 ---
 

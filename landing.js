@@ -79,6 +79,26 @@
                          + "When it is, this becomes the only mint link — anything else is not us.";
   }
 
+  /* ---------- the top bar ----------
+     A link only appears once it goes somewhere. The placeholders in
+     data.js are blanks, not links, and showing them would send people
+     to an empty profile. */
+  const ticker = $("[data-ticker]");
+  if (ticker) ticker.textContent = TOKEN_NAME;
+
+  const nest = $(".top-links");
+  if (nest) {
+    const REAL = { x: "X", telegram: "Telegram", marketplace: "Market" };
+    Object.entries(REAL).forEach(([key, label]) => {
+      const url = (CONFIG.links && CONFIG.links[key]) || "";
+      if (!url || /^https:\/\/(x\.com|t\.me)\/?$/.test(url)) return;
+      const a = document.createElement("a");
+      a.href = url; a.target = "_blank"; a.rel = "noopener";
+      a.textContent = label;
+      nest.appendChild(a);
+    });
+  }
+
   /* ---------- links ---------- */
   Object.entries(CONFIG.links).forEach(([key, url]) => {
     const el = $(`[data-link="${key}"]`);

@@ -425,23 +425,6 @@ window.RealmJourney = (() => {
     }
   }
 
-  /* Only show a social link if it actually goes somewhere. The
-     placeholders in data.js are not links, they are blanks. */
-  function socials() {
-    const cfg  = g_("CONFIG", {});
-    const nest = document.querySelector(".j-social");
-    if (!nest || !cfg.links || nest.children.length) return;
-    const REAL = { x: "X", telegram: "Telegram", marketplace: "Market" };
-    Object.entries(REAL).forEach(([key, name]) => {
-      const url = cfg.links[key] || "";
-      if (!url || /^https:\/\/(x\.com|t\.me)\/?$/.test(url)) return;
-      const a = document.createElement("a");
-      a.href = url; a.target = "_blank"; a.rel = "noopener";
-      a.textContent = name;
-      nest.appendChild(a);
-    });
-  }
-
   /* back out to the door — the door is a whole entrance, so it is
      opened again rather than kept alive behind this */
   const back = document.getElementById("j-back");
@@ -459,7 +442,6 @@ window.RealmJourney = (() => {
   function start() {
     if (running) return;
     build();
-    socials();
     resize();
     running = true;
     paint(0, 0);

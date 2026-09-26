@@ -12,6 +12,34 @@
 }
 canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 
+/* ---------- across the top of everything ---------- */
+.topbar{
+  position:fixed;left:0;right:0;top:0;z-index:30;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  height:calc(44px + env(safe-area-inset-top));
+  padding:env(safe-area-inset-top) clamp(12px,4vw,22px) 0;
+  background:#000;
+  border-bottom:1px solid rgba(227,186,92,.3);
+  transition:opacity .5s ease;
+}
+/* nothing but the tunnel while you are in the tunnel */
+body[data-phase="tunnel"] .topbar{opacity:0;pointer-events:none}
+
+.topbar .mark{
+  margin:0;font-family:'Pixelify Sans',system-ui,sans-serif;font-weight:700;
+  font-size:.95rem;letter-spacing:.2em;color:#f4efe4;white-space:nowrap;
+}
+.topbar .mark b{color:#e3ba5c;font-weight:700}
+
+.top-links{display:flex;gap:clamp(12px,4vw,20px);align-items:center}
+.top-links a{
+  font-family:'Pixelify Sans',system-ui,sans-serif;font-weight:700;
+  font-size:.82rem;letter-spacing:.14em;text-transform:uppercase;
+  color:#9d8fc4;text-decoration:none;
+  padding:6px 2px;
+}
+.top-links a:hover{color:#e3ba5c}
+
 /* ---------- the door in the tree ---------- */
 .gate{
   position:absolute;inset:0;
@@ -274,21 +302,11 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 
 .j-back{
   position:fixed;z-index:4;
-  top:max(14px,env(safe-area-inset-top));left:14px;
-  width:40px;height:40px;border-radius:50%;cursor:pointer;
+  top:calc(56px + env(safe-area-inset-top));left:14px;
+  width:40px;height:40px;cursor:pointer;
   display:grid;place-items:center;font-size:1.1rem;
   color:#f4efe4;background:rgba(7,4,15,.6);border:1px solid rgba(227,186,92,.4);
 }
 .j-back:hover{border-color:#e3ba5c;color:#e3ba5c}
 
-.j-social{
-  position:fixed;z-index:4;
-  top:max(18px,env(safe-area-inset-top));right:16px;
-  display:flex;gap:16px;
-}
-.j-social a{
-  font-family:'Pixelify Sans',system-ui,sans-serif;
-  font-size:.70rem;letter-spacing:.2em;text-transform:uppercase;
-  color:#7b6ea0;text-decoration:none;
-}
-.j-social a:hover{color:#e3ba5c}
+
