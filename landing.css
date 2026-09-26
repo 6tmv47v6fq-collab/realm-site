@@ -87,6 +87,17 @@
    layer thousands of pixels wide */
 .gate.gone .keeper{animation:none}
 .gate.gone #keeper{animation:none;filter:none}
+
+/* the canvas takes the whole gate for the swallow, so the picture has
+   room to grow past the edges of the screen instead of filling a box.
+   The feathered edge is cut into the canvas from here on — a CSS mask
+   is fixed to the element, so it would slice the zoom in half. */
+#keeper.full{
+  position:absolute;inset:0;
+  width:100%;height:100%;max-width:none;max-height:none;
+  animation:none;filter:none;
+  -webkit-mask-image:none;mask-image:none;
+}
 .gate.gone .enter,.gate.gone .creed,
 .gate.gone .standing,.gate.gone .terms{
   opacity:0;transition:opacity .3s;pointer-events:none;

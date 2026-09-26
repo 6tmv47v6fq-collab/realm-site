@@ -481,7 +481,7 @@
 
   let rlast = 0;
   function ripple(ms) {
-    if (phase !== "gate") return;              // the swallow takes over
+    if (phase !== "gate" || swallowing) return;   // the swallow takes over
     if (!document.hidden && ms - rlast > 32) { // 30fps is plenty for a drift
       rlast = ms;
       drawKeeper(ms * 0.001, 0);
@@ -489,12 +489,131 @@
     requestAnimationFrame(ripple);
   }
 
-  /* Being swallowed is drawn INSIDE the canvas, at its own fixed size.
-     Scaling the element itself with CSS asks the browser to rasterise a
-     layer thousands of pixels across, which locks a phone up for
-     seconds. Redrawing the baked picture costs the same every frame
-     however far in we are. */
-  function swallow(p) { drawKeeper(performance.now() * 0.001, p); }
+  /* ---------- being swallowed ----------
+     Until now the picture lives in a canvas the size of the picture,
+     sitting in the middle of the screen. Zooming inside that canvas
+     fills it edge to edge with bright pixels, and its edges then read
+     as a box pasted on the sky.
+
+     So the moment the pull starts, the canvas is stretched to cover the
+     whole gate and the picture is drawn into the rectangle it was
+     already occupying — the first frame is identical — and from there
+     the zoom has the entire screen to grow into.
+
+     The zoom stays INSIDE the canvas. Scaling the element with CSS asks
+     the browser to rasterise a layer thousands of pixels across, which
+     locks a phone up for seconds; redrawing the baked picture costs the
+     same every frame however far in we are. */
+  let sw = null;                 // the picture's box, in canvas pixels
+  let swallowing = false;
+
+  function beginSwallow() {
+    if (!kc || !art) return;
+    swallowing = true;
+
+    const r = keeper.getBoundingClientRect();     // where the art is now
+
+    /* hold the wrapper's box so the door and the creed don't jump as the
+       canvas leaves the flow underneath them */
+    const wrap = keeper.parentElement;
+    if (wrap) {
+      wrap.style.height = wrap.getBoundingClientRect().height + "px";
+      wrap.style.position = "static";
+    }
+
+    keeper.classList.add("full");
+    const f = keeper.getBoundingClientRect();     // the box it covers now
+
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    keeper.width  = Math.max(1, Math.round(f.width  * dpr));
+    keeper.height = Math.max(1, Math.round(f.height * dpr));
+
+    sw = {
+      x: (r.left - f.left) * dpr, y: (r.top - f.top) * dpr,
+      w: r.width * dpr,           h: r.height * dpr
+    };
+  }
+
+  /* The CSS mask that stops the art reading as a pasted rectangle is in
+     element space, so it cannot come along for the ride. The same two
+     shapes are cut into the canvas instead, under the same transform as
+     the picture: a soft oval, and a fade top and bottom. */
+  function feather(x, y, w, h) {
+    kc.globalAlpha = 1;
+    kc.globalCompositeOperation = "destination-out";
+
+    const rx = w * 0.86, ry = h * 0.84;
+    kc.save();
+    kc.translate(x + w * 0.5, y + h * 0.48);
+    kc.scale(1, ry / rx);
+    const oval = kc.createRadialGradient(0, 0, rx * 0.52, 0, 0, rx);
+    oval.addColorStop(0, "rgba(0,0,0,0)");
+    oval.addColorStop(1, "rgba(0,0,0,1)");
+    kc.fillStyle = oval;
+    kc.fillRect(-rx * 2, -rx * 2, rx * 4, rx * 4);
+    kc.restore();
+
+    const ends = kc.createLinearGradient(0, y, 0, y + h);
+    ends.addColorStop(0,    "rgba(0,0,0,1)");
+    ends.addColorStop(0.07, "rgba(0,0,0,0)");
+    ends.addColorStop(0.93, "rgba(0,0,0,0)");
+    ends.addColorStop(1,    "rgba(0,0,0,1)");
+    kc.fillStyle = ends;
+    kc.fillRect(x, y, w, h);
+
+    kc.globalCompositeOperation = "source-over";
+  }
+
+  function swallow(p) {
+    if (!kc || !art || !sw) return;
+    const t = performance.now() * 0.001;
+
+    kc.setTransform(1, 0, 0, 1, 0, 0);
+    kc.clearRect(0, 0, keeper.width, keeper.height);
+
+    // the mouth, in this canvas's own pixels
+    const mx = sw.x + sw.w * RealmCreature.MOUTH.x;
+    const my = sw.y + sw.h * RealmCreature.MOUTH.y;
+
+    const s = 1 + 15 * p * p * p;
+    kc.translate(mx, my); kc.scale(s, s); kc.translate(-mx, -my);
+    kc.globalAlpha = Math.max(0, 1 - Math.pow(p, 2.6));
+
+    /* The warp is 130 separate draws, and every join between them shows
+       as a line once the picture is several times its own size. So the
+       warp is spent early, while the picture is still near its own
+       scale, and after that it is one single draw with nothing to join.
+       Every term dies with `ease`, so the two paths meet exactly and
+       there is no moment where the seams visibly vanish. */
+    const ease = Math.max(0, 1 - p / 0.35);
+
+    if (ease <= 0) {
+      kc.drawImage(art, sw.x, sw.y, sw.w, sw.h);
+    } else {
+      const aw = art.naturalWidth, ah = art.naturalHeight;
+      const src = ah / SLICES;
+      const k   = sw.h / ah;        // picture pixels -> canvas pixels
+      const e2  = ease * ease;
+
+      const amp  = (sw.w * 0.009) * e2;
+      const roll = (sw.w * 0.003) * e2;
+      const over = amp * 2.2 + roll * 2.2 + 2 * e2;
+
+      for (let i = 0; i < SLICES; i++) {
+        const f  = i / SLICES;
+        const dx = Math.sin(f * 3.1 + t * 0.9) * amp
+                 + Math.sin(f * 5.4 - t * 0.52) * roll;
+        kc.drawImage(art, 0, i * src, aw, src + 2,
+                     sw.x + dx - over, sw.y + i * src * k,
+                     sw.w + over * 2, (src + 2) * k);
+      }
+    }
+
+    feather(sw.x, sw.y, sw.w, sw.h);
+
+    kc.setTransform(1, 0, 0, 1, 0, 0);
+    kc.globalAlpha = 1;
+  }
 
   /* ---------- states ---------- */
   const gate    = document.querySelector(".gate");
@@ -520,8 +639,10 @@
 
   function enter() {
     if (phase !== "gate") return;
+    if (still) { gate.classList.add("gone"); land(); return; }
+
+    beginSwallow();                 // measure first: the class below moves it
     gate.classList.add("gone");
-    if (still) { land(); return; }
 
     const t0 = performance.now();
     (function pull(now) {
