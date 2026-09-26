@@ -87,7 +87,7 @@
   (function loadTree() {
     const img = new Image();
     img.decoding = "async";
-    img.onload = () => { art = img; tree.classList.add("ready"); };
+    img.onload = () => { art = img; buildPortal(); tree.classList.add("ready"); };
     img.onerror = () => {
       if (img.src.indexOf(SMALL) === -1) { img.src = SMALL; return; }
     };
@@ -102,6 +102,151 @@
      off the bottom of the screen — which is where the words stand, in
      the dark, rather than over the artwork. */
   const DOOR_AT = 0.44;
+
+
+  /* ============================================================
+     THE LIGHT IN THE DOORWAY
+
+     The picture is still, so the energy standing in the arch is still
+     too. It is found once, by colour — the tree is green and the door
+     is brown, so the one place where neither is the strongest colour is
+     the light between them — and from then on that patch is redrawn
+     every frame, climbing, so the colours move while the arch around
+     them stays exactly where it is.
+     ============================================================ */
+
+  let maskCv = null, PB = null, flowCv = null, flowC = null;
+
+  function buildPortal() {
+    const AW = 200, AH = Math.max(1, Math.round(AW * art.height / art.width));
+    const probe = document.createElement("canvas");
+    probe.width = AW; probe.height = AH;
+    const pg = probe.getContext("2d", { willReadFrequently: true });
+    pg.drawImage(art, 0, 0, AW, AH);
+
+    let px;
+    try { px = pg.getImageData(0, 0, AW, AH); } catch (e) { return; }
+    const d = px.data;
+
+    let x0 = 1, y0 = 1, x1 = 0, y1 = 0, found = 0;
+    for (let i = 0; i < d.length; i += 4) {
+      const p = i >> 2, fx = (p % AW) / AW, fy = ((p / AW) | 0) / AH;
+      const r = d[i], g = d[i + 1], b = d[i + 2];
+      d[i + 3] = 0;
+      if (fx < AIM.x - 0.16 || fx > AIM.x + 0.14) continue;
+      if (fy < AIM.y - 0.255 || fy > AIM.y + 0.185) continue;
+      if (g >= (r > b ? r : b) - 4) continue;   // green — that is the tree
+      if (b < r * 0.82) continue;               // brown — that is the door
+      if ((r + g + b) / 3 <= 62) continue;      // too dark to be the light
+      d[i] = d[i + 1] = d[i + 2] = d[i + 3] = 255;
+      found++;
+      if (fx < x0) x0 = fx; if (fx > x1) x1 = fx;
+      if (fy < y0) y0 = fy; if (fy > y1) y1 = fy;
+    }
+    if (found < 40) return;
+    pg.putImageData(px, 0, 0);
+
+    /* a stencil edge would show; soften it by passing the shape through
+       a much smaller copy of itself */
+    const tiny = document.createElement("canvas");
+    tiny.width = Math.max(1, AW / 2 | 0); tiny.height = Math.max(1, AH / 2 | 0);
+    tiny.getContext("2d").drawImage(probe, 0, 0, tiny.width, tiny.height);
+    maskCv = document.createElement("canvas");
+    maskCv.width = AW; maskCv.height = AH;
+    const mg = maskCv.getContext("2d");
+    mg.drawImage(probe, 0, 0);                 // the shape itself, solid
+    mg.globalAlpha = 0.65;
+    mg.drawImage(tiny, 0, 0, AW, AH);          // and a soft edge on it
+    mg.globalAlpha = 1;
+
+    PB = { x0: Math.max(0, x0 - 0.025), y0: Math.max(0, y0 - 0.025),
+           x1: Math.min(1, x1 + 0.025), y1: Math.min(1, y1 + 0.025) };
+
+    flowCv = document.createElement("canvas");
+    flowCv.width = 240;
+    flowCv.height = Math.max(2, Math.round(240 *
+      ((PB.y1 - PB.y0) * art.height) / ((PB.x1 - PB.x0) * art.width)));
+    flowC = flowCv.getContext("2d");
+  }
+
+  /* One pass of the light, climbing. Two copies of it half a cycle
+     apart, crossfaded, so it never reaches a seam and restarts. */
+  function flowDoor(t, x, y, w, h, open) {
+    if (!maskCv || !PB || !flowC) return;
+    const FW = flowCv.width, FH = flowCv.height;
+    const sx = PB.x0 * art.width,  sy = PB.y0 * art.height;
+    const sw = (PB.x1 - PB.x0) * art.width, sh = (PB.y1 - PB.y0) * art.height;
+
+    flowC.setTransform(1, 0, 0, 1, 0, 0);
+    flowC.clearRect(0, 0, FW, FH);
+
+    /* Each copy has one join in it, where its top meets its own bottom.
+       That join travels down the arch as it climbs, so each copy is
+       weighted by how far the join is from the middle — at its most
+       visible it is not being shown at all. */
+    const u = (t / 4.2) % 1;
+    for (const o of [u, (u + 0.5) % 1]) {
+      flowC.globalAlpha = Math.abs(2 * o - 1);
+      const lift = o * FH;
+      flowC.drawImage(art, sx, sy, sw, sh, 0, -lift,      FW, FH);
+      flowC.drawImage(art, sx, sy, sw, sh, 0, FH - lift,  FW, FH);
+    }
+
+    // filaments running up through it
+    flowC.globalAlpha = 1;
+    flowC.globalCompositeOperation = "lighter";
+    for (let k = 0; k < 5; k++) {
+      const ph = k * 1.7, climb = ((t * 0.33 + k / 5) % 1);
+      flowC.strokeStyle = `hsla(${k % 2 ? 176 : 286},100%,84%,${0.11 * open})`;
+      flowC.lineWidth = FW * 0.02;
+      flowC.beginPath();
+      for (let s = 0; s <= 14; s++) {
+        const f = s / 14;
+        const py = FH * (1 - ((f * 0.5 + climb) % 1));
+        const pxx = FW * (0.52 + Math.sin(f * 4.2 + t * 1.1 + ph) * 0.17);
+        s ? flowC.lineTo(pxx, py) : flowC.moveTo(pxx, py);
+      }
+      flowC.stroke();
+    }
+    flowC.globalCompositeOperation = "destination-in";
+    flowC.drawImage(maskCv,
+      PB.x0 * maskCv.width, PB.y0 * maskCv.height,
+      (PB.x1 - PB.x0) * maskCv.width, (PB.y1 - PB.y0) * maskCv.height,
+      0, 0, FW, FH);
+    flowC.globalCompositeOperation = "source-over";
+
+    tc.drawImage(flowCv, x + w * PB.x0, y + h * PB.y0,
+                 w * (PB.x1 - PB.x0), h * (PB.y1 - PB.y0));
+  }
+
+
+  /* ---------- the tree will not hold still ----------
+     Bands of the picture, each slid sideways by its own slow wave. The
+     wave dies away downward, so the canopy moves the way a canopy does
+     and the trunk, the door and the roots stay rooted. Sideways only:
+     moving a band up or down tears a gap above it. */
+  const BANDS = 30;
+
+  function drawTree(t, pull, x, y, w, h) {
+    const ease = Math.max(0, 1 - pull / 0.3);
+    if (ease <= 0) { tc.drawImage(art, x, y, w, h); return; }
+
+    const e2  = ease * ease;
+    const src = art.height / BANDS;
+    const k   = h / art.height;
+    /* every band the same width, or the mismatch shows as a seam */
+    const over = w * 0.0135 * e2 + 2 * e2;
+
+    for (let i = 0; i < BANDS; i++) {
+      const f = i / BANDS;
+      const hold = Math.max(0, 1 - f / 0.6);        // still by the trunk
+      const amp = w * 0.0055 * hold * hold * e2;
+      const dx = Math.sin(t * 0.42 + f * 2.1) * amp
+               + Math.sin(t * 0.26 - f * 3.7) * amp * 0.5;
+      tc.drawImage(art, 0, i * src, art.width, src + 2,
+                   x + dx - over, y + i * src * k, w + over * 2, (src + 2) * k);
+    }
+  }
 
   function frame(zoom) {
     const cover = Math.max(W / art.width, H / art.height) * zoom;
@@ -194,7 +339,11 @@
       tc.translate(ax, ay); tc.scale(rush, rush); tc.translate(-ax, -ay);
       tc.globalAlpha = Math.max(0, 1 - Math.pow(pull, 2.4));
     }
-    tc.drawImage(art, x, y, w, h);
+    drawTree(t, pull, x, y, w, h);
+
+    // the doorway, breathing
+    const door = 0.42 + 0.2 * Math.sin(t * 0.55) + 0.07 * Math.sin(t * 1.9);
+    flowDoor(t, x, y, w, h, door);
 
     /* ---------- light ---------- */
     tc.globalCompositeOperation = "lighter";
@@ -216,8 +365,7 @@
       tc.stroke();
     }
 
-    // the doorway, breathing, in the tunnel's own colours
-    const door = 0.42 + 0.2 * Math.sin(t * 0.55) + 0.07 * Math.sin(t * 1.9);
+    // the light it throws into the room, in the tunnel's own colours
     const open = door + pull * 2.2;
     glow(tc, ax, ay, w * 0.26, 282, open * 0.3, 74);
     glow(tc, ax, ay, w * 0.10, 172, open * 0.5, 86);
