@@ -12,11 +12,11 @@ window.RealmJourney = (() => {
   "use strict";
 
   const OPTIONS = [
-    { key: "mint",  label: "MINT",              kind: "hex",     hue: 288, sub: "",        panel: "mint" },
-    { key: "map",   label: "MAP",               kind: "diamond", hue: 196, sub: "ten sectors", href: "realm.html" },
-    { key: "nfts",  label: "NFTS",              kind: "bloom",   hue: 268, sub: "the beings", panel: "nfts" },
-    { key: "x",     label: "X",                 kind: "star",    hue: 44,  sub: "follow",  link: "x" },
-    { key: "story", label: "THE STORY SO FAR",  kind: "circle",  hue: 152, sub: "",        panel: "lore" }
+    { key: "mint",    label: "MINT",        kind: "hex",     hue: 288, panel: "mint" },
+    { key: "map",     label: "THE MAP",     kind: "diamond", hue: 196, href: "realm.html" },
+    { key: "beings",  label: "THE BEINGS",  kind: "bloom",   hue: 268, panel: "nfts" },
+    { key: "rewards", label: "REWARDS",     kind: "star",    hue: 44,  panel: "rewards" },
+    { key: "lore",    label: "LORE",        kind: "circle",  hue: 152, panel: "lore" }
   ];
 
   /* ---------- shapes, as a radius for any angle ----------
@@ -230,7 +230,7 @@ window.RealmJourney = (() => {
     },
 
     /* the beings themselves, drifting past */
-    nfts(g, S, t, hue, dt) {
+    beings(g, S, t, hue, dt) {
       bakeBeings();
       for (const b of beings) {
         b.x += b.vx * dt; b.y += b.vy * dt;
@@ -241,29 +241,46 @@ window.RealmJourney = (() => {
       }
     },
 
-    /* a mark, and everything streaming past it */
-    x(g, S, t, hue) {
-      const c = S * 0.42;
-      for (let k = 0; k < 26; k++) {          // the stream
-        const ph = (t * 0.22 + k / 26) % 1;
-        const y  = c + (k % 2 ? 1 : -1) * ((k % 13) / 13) * S * 0.34;
-        const x  = (ph * 1.5 - 0.25) * S;
-        g.strokeStyle = `hsla(${hue + k * 6},100%,72%,${0.5 * Math.sin(ph * Math.PI)})`;
-        g.lineWidth = 1.6;
-        g.beginPath(); g.moveTo(x, y); g.lineTo(x - S * 0.1, y); g.stroke();
+    /* who the rewards reach: the many, the few, the wanderers */
+    rewards(g, S, t, hue) {
+      const c = S * 0.42, R = S * 0.24;
+
+      /* three rings: the many on the outside, the few at the centre,
+         and a thread crossing between them */
+      const counts = [18, 7, 1];
+      for (let ring = 0; ring < 3; ring++) {
+        const rr = R * (1 - ring * 0.34);
+        const n  = counts[ring];
+        g.strokeStyle = `hsla(${hue + ring * 26},90%,68%,0.22)`;
+        g.lineWidth = 1;
+        g.beginPath(); g.arc(c, c, rr, 0, Math.PI * 2); g.stroke();
+
+        for (let k = 0; k < n; k++) {
+          const a = (k / n) * Math.PI * 2 + t * (0.1 - ring * 0.05) * (ring % 2 ? -1 : 1);
+          const x = c + Math.cos(a) * rr, y = c + Math.sin(a) * rr;
+          const lit = 0.45 + 0.55 * Math.abs(Math.sin(t * 1.4 + k * 0.7 + ring));
+          g.fillStyle = ring === 2 ? "#f0d489" : `hsla(${hue + ring * 30},100%,74%,${lit})`;
+          g.beginPath();
+          g.arc(x, y, S * (ring === 2 ? 0.03 : 0.016) * (ring === 2 ? 1 + Math.sin(t * 2) * 0.12 : 1), 0, Math.PI * 2);
+          g.fill();
+        }
       }
-      const r = S * 0.17 * (1 + Math.sin(t * 1.6) * 0.05);
-      g.strokeStyle = "#fff"; g.lineWidth = S * 0.035; g.lineCap = "round";
+
+      // the pilgrim's thread, crossing sectors
+      g.strokeStyle = `hsla(${hue + 60},100%,80%,0.5)`;
+      g.lineWidth = 1.3;
       g.beginPath();
-      g.moveTo(c - r, c - r); g.lineTo(c + r, c + r);
-      g.moveTo(c + r, c - r); g.lineTo(c - r, c + r);
-      g.stroke();
-      g.strokeStyle = `hsla(${hue},100%,72%,0.55)`; g.lineWidth = S * 0.07;
+      for (let k = 0; k <= 40; k++) {
+        const a = (k / 40) * Math.PI * 4 + t * 0.3;
+        const rr = R * (0.2 + (k / 40) * 0.8);
+        const x = c + Math.cos(a) * rr, y = c + Math.sin(a) * rr;
+        k ? g.lineTo(x, y) : g.moveTo(x, y);
+      }
       g.stroke();
     },
 
     /* the story, flowing through */
-    story(g, S, t, hue) {
+    lore(g, S, t, hue) {
       const secs  = g_("SECTORS", []);
       const round = g_("ROUND", 1);
       const text = (secs[round - 1] && secs[round - 1].lore) || "";
@@ -448,16 +465,31 @@ window.RealmJourney = (() => {
   }
 
   /* ---------- which option are we on ---------- */
-  let current = 0;
+  function subFor(o) {
+    const cfg   = g_("CONFIG", {});
+    const secs  = g_("SECTORS", []);
+    const round = g_("ROUND", 1);
+    const total = g_("SUPPLY_PER_ROUND", 111);
+    const here  = (secs[round - 1] && secs[round - 1].name) || "";
+    switch (o.key) {
+      case "mint":    return cfg.mintLink ? `Round ${round} · ${here}` : "not open yet";
+      case "map":     return "flat realm, then fly in";
+      case "beings":  return `${total} in this sector`;
+      case "rewards": return "share, witnesses, pilgrims";
+      case "lore":    return "only opened chapters";
+      default:        return "";
+    }
+  }
+
+  let current = -1;
   function settle(p) {
     const n = Math.round(p);
     if (n === current) return;
     current = n;
     document.querySelectorAll(".dot-j").forEach((d, k) =>
       d.classList.toggle("on", k === n));
-    const o = OPTIONS[n];
     const sub = document.querySelector(".j-sub");
-    if (sub) sub.textContent = o.sub || "";
+    if (sub) sub.textContent = subFor(OPTIONS[n]);
   }
 
   function choose() {
@@ -497,6 +529,7 @@ window.RealmJourney = (() => {
       // a real control for keyboards and screen readers
       const btn = document.createElement(o.href ? "a" : "button");
       btn.className = "stop-hit";
+      btn.addEventListener("focus", () => wrap.scrollTo({ top: i * H }));
       if (o.href) btn.href = o.href; else btn.type = "button";
       btn.textContent = o.label;
       btn.addEventListener("click", e => {
@@ -514,9 +547,40 @@ window.RealmJourney = (() => {
     });
   }
 
+  /* Only show a social link if it actually goes somewhere. The
+     placeholders in data.js are not links, they are blanks. */
+  function socials() {
+    const cfg  = g_("CONFIG", {});
+    const nest = document.querySelector(".j-social");
+    if (!nest || !cfg.links) return;
+    const REAL = { x: "X", telegram: "Telegram", marketplace: "Market" };
+    Object.entries(REAL).forEach(([key, name]) => {
+      const url = cfg.links[key] || "";
+      const placeholder = /^https:\/\/(x\.com|t\.me)\/?$/.test(url);
+      if (!url || placeholder) return;
+      const a = document.createElement("a");
+      a.href = url; a.target = "_blank"; a.rel = "noopener";
+      a.textContent = name;
+      nest.appendChild(a);
+    });
+  }
+
+  /* a way back out of the journey, without a reload */
+  const back = document.getElementById("j-back");
+  if (back) back.addEventListener("click", () => {
+    if (window.RealmPanels) RealmPanels.hide();
+    wrap.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && !document.querySelector(".panel:not([hidden])")) {
+      wrap.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
+
   function start() {
     if (running) return;
     build();
+    socials();
     resize();
     labels = OPTIONS.map(o => bakeLabel(o.label, o.hue));
     running = true;

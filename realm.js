@@ -338,6 +338,11 @@
       d.classList.toggle("here", k === i));
     const l = $("#lore-text");
     if (l) l.textContent = SECTORS[i].lore;
+    const go = $("#world-link");
+    if (go) {
+      go.textContent = `Enter ${SECTORS[i].name} \u2192`;
+      go.href = `world.html?sector=${i}`;
+    }
   }
 
   /* ---------- build the controls ---------- */

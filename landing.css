@@ -410,3 +410,71 @@
   .journey{scroll-snap-type:y proximity}
   .j-hint{animation:none}
 }
+
+/* ---------- the standing facts, under the door ---------- */
+.standing{
+  margin:0;display:flex;gap:clamp(14px,5vw,30px);justify-content:center;
+  flex-wrap:wrap;
+}
+.standing div{display:flex;flex-direction:column;gap:3px;align-items:center}
+.standing dt{
+  margin:0;font-family:'Space Grotesk',system-ui,sans-serif;
+  font-size:.56rem;letter-spacing:.26em;text-transform:uppercase;color:#7b6ea0;
+}
+.standing dd{
+  margin:0;font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-weight:700;
+  font-size:.78rem;letter-spacing:.05em;color:#f4efe4;
+}
+.standing dd.shut{color:#9d8fc4;font-weight:500}
+
+.terms{
+  margin:0;font-family:'Space Grotesk',system-ui,sans-serif;
+  font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:#6d6192;
+}
+
+/* on a short screen the creature gives way before the words do */
+@media (max-height:700px){
+  #keeper{max-width:min(84vw,420px)}
+  .gate{gap:clamp(3px,.8vh,9px)}
+}
+@media (max-height:600px){
+  #keeper{max-width:min(66vw,320px)}
+  .terms{display:none}
+}
+
+/* ---------- the rest of the journey's chrome ---------- */
+.j-more{
+  position:fixed;left:0;right:0;z-index:3;
+  bottom:calc(6px + env(safe-area-inset-bottom));
+  display:flex;gap:22px;justify-content:center;
+}
+.j-more button{
+  background:none;border:0;padding:4px 2px;cursor:pointer;
+  font-family:'Space Grotesk',system-ui,sans-serif;
+  font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;color:#7b6ea0;
+}
+.j-more button:hover{color:#e3ba5c}
+
+.j-back{
+  position:fixed;z-index:4;
+  top:max(14px,env(safe-area-inset-top));left:14px;
+  width:40px;height:40px;border-radius:50%;cursor:pointer;
+  display:grid;place-items:center;font-size:1.1rem;
+  color:#f4efe4;background:rgba(7,4,15,.6);border:1px solid rgba(227,186,92,.4);
+}
+.j-back:hover{border-color:#e3ba5c;color:#e3ba5c}
+
+.j-social{
+  position:fixed;z-index:4;
+  top:max(18px,env(safe-area-inset-top));right:16px;
+  display:flex;gap:16px;
+}
+.j-social a{
+  font-family:'Space Grotesk',system-ui,sans-serif;
+  font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;
+  color:#7b6ea0;text-decoration:none;
+}
+.j-social a:hover{color:#e3ba5c}
+
+.j-hint{bottom:calc(58px + env(safe-area-inset-bottom))}
+.j-dots{bottom:calc(30px + env(safe-area-inset-bottom))}

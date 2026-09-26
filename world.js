@@ -59,7 +59,14 @@
   camera.rotation.order = "YXZ";
   const clock  = new THREE.Clock();
 
-  let sector = ROUND - 1;
+  /* realm.html sends you to a particular sector */
+  const askedFor = (() => {
+    const m = /[?&]sector=(\d+)/.exec(location.search);
+    const n = m ? parseInt(m[1], 10) : NaN;
+    return (isFinite(n) && n >= 0 && n < ROUND) ? n : ROUND - 1;
+  })();
+
+  let sector = askedFor;
   let shape  = SHAPES[sector];
   let env    = new THREE.Group();
   let swarm  = new THREE.Group();

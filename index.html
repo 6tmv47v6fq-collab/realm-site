@@ -25,6 +25,14 @@
     <span class="enter-in">Enter the realm</span>
   </button>
   <p class="creed">10 sectors &middot; 1,110 beings</p>
+
+  <!-- what a stranger needs to know, all of it from data.js -->
+  <dl class="standing">
+    <div><dt>Open now</dt><dd id="st-chapter"></dd></div>
+    <div><dt>Taken</dt><dd id="st-supply"></dd></div>
+    <div><dt>Mint</dt><dd id="st-status"></dd></div>
+  </dl>
+  <p class="terms">Solana &middot; 3 per wallet &middot; sealed until reveal</p>
 </main>
 
 <!-- where you come out: the journey -->
@@ -36,7 +44,13 @@
   <canvas id="morph" aria-label="Choose"></canvas>
   <p class="j-sub"></p>
   <div class="j-dots"></div>
+  <nav class="j-more">
+    <button type="button" data-open="rounds">Rounds</button>
+    <button type="button" data-open="faq">FAQ</button>
+  </nav>
   <p class="j-hint">scroll &darr;</p>
+  <button id="j-back" class="j-back" type="button" aria-label="Back to the door">&larr;</button>
+  <nav class="j-social"></nav>
 </div>
 
 <!-- overlay panels -->

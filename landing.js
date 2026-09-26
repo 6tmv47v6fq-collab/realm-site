@@ -22,6 +22,24 @@
   const rl = $("[data-round-label]");
   if (rl) rl.textContent = `round ${round}`;
 
+  /* ---------- what is true right now, on the door ---------- */
+  const chapter = $("#st-chapter");
+  if (chapter) chapter.textContent = `Round ${round} · ${current.name}`;
+
+  const supply = $("#st-supply");
+  if (supply) {
+    supply.textContent = CONFIG.minted > 0
+      ? `${CONFIG.minted} of ${SUPPLY_PER_ROUND}`
+      : `none of ${SUPPLY_PER_ROUND} yet`;
+  }
+
+  const status = $("#st-status");
+  if (status) {
+    const open = !!CONFIG.mintLink;
+    status.textContent = open ? "Open" : "Closed";
+    status.classList.toggle("shut", !open);
+  }
+
   /* ---------- mint ---------- */
   const bar = $("[data-bar]");
   if (bar) {
