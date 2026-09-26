@@ -7,9 +7,9 @@
      options  the chamber you come out into
 
    The tree is a still picture. Everything that makes it feel like a
-   living place is drawn over it: light moves through the canopy, the
-   sun flares, fireflies drift, and the doorway breathes. Pressing
-   ENTER rushes the whole picture into that doorway.
+   living place is drawn over it: the canopy bends in gusts, the sun
+   flares through it, smoke rises off the roots, and the doorway
+   breathes. Pressing ENTER rushes the whole picture into that doorway.
 
    The tunnel is meant to be punishing. It measures its own frame rate
    and adds detail until the device is working hard, then holds there —
@@ -272,7 +272,7 @@
      wave dies away downward, so the canopy moves the way a canopy does
      and the trunk, the door and the roots stay rooted. Sideways only:
      moving a band up or down tears a gap above it. */
-  const BANDS = 30;
+  const BANDS = 48;
 
   function drawTree(t, pull, x, y, w, h) {
     const ease = Math.max(0, 1 - pull / 0.3);
@@ -282,14 +282,32 @@
     const src = art.height / BANDS;
     const k   = h / art.height;
     /* every band the same width, or the mismatch shows as a seam */
-    const over = w * 0.0135 * e2 + 2 * e2;
+    const over = w * 0.028 * e2 + 2 * e2;
+
+    /* Wind is not a metronome. A slow envelope makes it arrive in gusts
+       and fall away again, so the tree is never doing the same thing for
+       long. */
+    const gust = 0.42 + 0.34 * Math.sin(t * 0.11)
+                      + 0.18 * Math.sin(t * 0.27 + 1.3)
+                      + 0.10 * Math.sin(t * 0.63 + 2.1);
 
     for (let i = 0; i < BANDS; i++) {
-      const f = i / BANDS;
-      const hold = Math.max(0, 1 - f / 0.6);        // still by the trunk
-      const amp = w * 0.0055 * hold * hold * e2;
-      const dx = Math.sin(t * 0.42 + f * 2.1) * amp
-               + Math.sin(t * 0.26 - f * 3.7) * amp * 0.5;
+      const f = i / BANDS;                       // 0 at the crown, 1 at the roots
+
+      /* How freely this height moves. The crown swings, the trunk barely
+         does, the roots not at all — squared, so it falls away the way a
+         trunk stiffens rather than in a straight line. */
+      const give = Math.max(0, 1 - f / 0.66);
+      const amp  = w * 0.013 * give * give * e2 * gust;
+
+      /* Three waves at different lengths and speeds, and each one lags
+         further down the tree, so what you see is a bend travelling up
+         through the branches rather than every row sliding together. */
+      const lag = f * 2.6;
+      const dx = Math.sin(t * 0.55 - lag)         * amp
+               + Math.sin(t * 0.91 - lag * 1.7)   * amp * 0.42
+               + Math.sin(t * 1.83 - lag * 2.9)   * amp * 0.16;
+
       tc.drawImage(art, 0, i * src, art.width, src + 2,
                    x + dx - over, y + i * src * k, w + over * 2, (src + 2) * k);
     }
@@ -327,32 +345,83 @@
     g.fillRect(0, oh * 0.5, ow, oh * 0.5);
   }
 
-  /* ---------- what moves in the air ---------- */
-  let flies = [], streaks = [], nextStreak = 2;
-
-  function seedAir() {
-    flies = [];
-    const n = Math.min(54, Math.round((W * H) / 17000));
-    for (let i = 0; i < n; i++) {
-      flies.push({
-        x: Math.random(), y: rand(0.1, 1.05),
-        r: rand(0.7, 2.2),
-        vy: rand(0.004, 0.02),
-        drift: rand(0, 6.3),
-        tw: rand(0.6, 2.4),
-        hue: rand(38, 62)
-      });
+  /* ---------- smoke ----------
+     Baked as a handful of small sprites with a dithered edge, then drawn
+     over and over. A soft gradient would look like a smudge once the
+     screen is blown up; a dithered one breaks into the same pixels as
+     everything else and reads as smoke made of them. */
+  const PUFFS = [];
+  function bakePuffs() {
+    if (PUFFS.length) return;
+    const BAYER = [
+      [ 0,  8,  2, 10], [12,  4, 14,  6],
+      [ 3, 11,  1,  9], [15,  7, 13,  5]
+    ];
+    /* deliberately tiny: every puff is drawn bigger than this, so the
+       dither is magnified into the same chunky pixels as the rest
+       rather than being thrown away by shrinking it */
+    for (let v = 0; v < 3; v++) {
+      const S = 11 + v * 5;
+      const cv = document.createElement("canvas");
+      cv.width = cv.height = S;
+      const g = cv.getContext("2d");
+      const img = g.createImageData(S, S);
+      const d = img.data;
+      const c = (S - 1) / 2;
+      for (let py = 0; py < S; py++) {
+        for (let px = 0; px < S; px++) {
+          const dx = (px - c) / c, dy = (py - c) / c;
+          // a little squashed, and lumpier on one side than the other
+          const r = Math.sqrt(dx * dx * (1 + v * 0.14) + dy * dy * 1.22);
+          const lump = 1 + 0.16 * Math.sin(Math.atan2(dy, dx) * (3 + v) + v * 2.1);
+          let a = 1 - r / lump;
+          a = a <= 0 ? 0 : Math.pow(a, 1.5);
+          // quantise through the dither table, so the edge crumbles
+          const step = (BAYER[py & 3][px & 3] + 0.5) / 16;
+          a = a * 6 - step > 0 ? Math.min(1, Math.round(a * 6 - step) / 6) : 0;
+          const i4 = (py * S + px) * 4;
+          d[i4] = 226; d[i4 + 1] = 216; d[i4 + 2] = 255;
+          d[i4 + 3] = a * 255;
+        }
+      }
+      g.putImageData(img, 0, 0);
+      PUFFS.push(cv);
     }
   }
 
-  /* light finding its way through the leaves */
-  function fireStreak() {
-    streaks.push({
-      x: rand(0.05, 0.95), y: rand(-0.02, 0.36),
-      vx: rand(-0.5, 0.5), vy: rand(0.14, 0.34),
-      life: 0, span: rand(0.7, 1.3),
-      hue: rand(44, 190)
-    });
+  let smoke = [];
+
+  function seedAir() {
+    bakePuffs();
+    smoke = [];
+    const n = Math.min(64, Math.round((W * H) / 5200));
+    for (let i = 0; i < n; i++) smoke.push(newPuff(Math.random()));
+  }
+
+  /* Smoke comes up off the roots, thickest where the trunk meets the
+     ground and thinning out to the sides. A puff is handed a fraction of
+     a life when it is made, so that on the first frame the air is already
+     full of smoke at every stage rather than a clean floor. */
+  function newPuff(f) {
+    const side = Math.random() < 0.5 ? -1 : 1;
+    const off  = Math.pow(Math.random(), 1.8) * 0.46 * side;
+    const q = {
+      x: 0.5 + off,
+      y: 1.0 + Math.random() * 0.12,
+      span: rand(9, 16),
+      rise: rand(0.055, 0.115),
+      sway: rand(0.5, 1.6),
+      phase: rand(0, 6.3),
+      drift: rand(-0.022, 0.022) + off * 0.07,
+      size: rand(0.12, 0.3),
+      grow: rand(0.8, 1.7),
+      spr: (Math.random() * 3) | 0,
+      a: rand(0.3, 0.58)
+    };
+    q.life = (f || 0) * q.span;
+    q.y   -= q.rise * q.life;                  // already on its way up
+    q.x   += q.drift * q.life;
+    return q;
   }
 
   let zoomed = false;          // true while the picture is being rushed into
@@ -443,49 +512,29 @@
     if (air > 0.01) {
       tc.globalCompositeOperation = "lighter";
 
-      // light moving across the leaves
-      for (let k = 0; k < 2; k++) {
-        const bxp = (((t * 0.028 + k / 2) % 1) * 1.7 - 0.35) * W;
-        const half = W * 0.26;
-        const l = Math.max(0, bxp - half), r2 = Math.min(W, bxp + half);
-        if (r2 > l) {
-          const sw = tc.createLinearGradient(bxp - half, 0, bxp + half, H);
-          sw.addColorStop(0,   "hsla(0,0%,0%,0)");
-          sw.addColorStop(0.5, `hsla(${64 + k * 40},100%,76%,${0.05 * air})`);
-          sw.addColorStop(1,   "hsla(0,0%,0%,0)");
-          tc.fillStyle = sw;
-          tc.fillRect(l, 0, r2 - l, H);
-        }
-      }
+      tc.globalCompositeOperation = "source-over";   // smoke blocks light
+      tc.imageSmoothingEnabled = false;             // and keeps its pixels
+      for (const q of smoke) {
+        q.life += dt;
+        if (q.life > q.span) { Object.assign(q, newPuff(0)); continue; }
 
-      // light finding its way through the leaves, now and then
-      nextStreak -= dt;
-      if (nextStreak <= 0) { fireStreak(); nextStreak = rand(1.6, 4.4); }
-      for (let i = streaks.length - 1; i >= 0; i--) {
-        const s2 = streaks[i];
-        s2.life += dt; s2.x += s2.vx * dt; s2.y += s2.vy * dt;
-        if (s2.life > s2.span) { streaks.splice(i, 1); continue; }
-        const fade = Math.sin((s2.life / s2.span) * Math.PI) * air;
-        const hx = s2.x * W, hy = s2.y * H;
-        const tx2 = hx - s2.vx * W * 0.16, ty2 = hy - s2.vy * H * 0.16;
-        const tail = tc.createLinearGradient(hx, hy, tx2, ty2);
-        tail.addColorStop(0, `hsla(${s2.hue},100%,92%,${0.7 * fade})`);
-        tail.addColorStop(1, "hsla(0,0%,0%,0)");
-        tc.strokeStyle = tail;
-        tc.lineWidth = 2;
-        tc.beginPath(); tc.moveTo(hx, hy); tc.lineTo(tx2, ty2); tc.stroke();
-      }
+        const u = q.life / q.span;              // 0 new, 1 spent
+        q.y -= q.rise * dt;
+        q.x += q.drift * dt + Math.sin(t * q.sway + q.phase) * 0.0016;
 
-      // fireflies
-      for (const f of flies) {
-        f.y -= f.vy * dt;
-        if (f.y < -0.03) { f.y = 1.03; f.x = Math.random(); }
-        const fx = (f.x + Math.sin(t * 0.3 + f.drift) * 0.014) * W;
-        const fy = f.y * H;
-        const on = 0.2 + 0.8 * Math.abs(Math.sin(t * f.tw + f.drift));
-        tc.fillStyle = `hsla(${f.hue},100%,80%,${on * 0.55 * air})`;
-        tc.beginPath(); tc.arc(fx, fy, f.r, 0, Math.PI * 2); tc.fill();
+        // gathers quickly, holds through the middle, thins out at the top
+        const fade = Math.min(1, u * 5) * Math.min(1, (1 - u) * 2.6);
+        if (fade <= 0.01) continue;
+        const d = W * q.size * (0.45 + q.grow * u);
+        const px = q.x * W, py = q.y * H;
+        if (px < -d || px > W + d || py < -d) continue;
+
+        tc.globalAlpha = q.a * fade * air;
+        tc.drawImage(PUFFS[q.spr], px - d / 2, py - d / 2, d, d);
       }
+      tc.globalAlpha = 1;
+      tc.imageSmoothingEnabled = true;
+      tc.globalCompositeOperation = "lighter";
 
       tc.globalCompositeOperation = "source-over";
     }

@@ -140,6 +140,22 @@ room.
 
 Both pictures are drawn full bleed, so anything tall and centred will work.
 
+## The smoke and the sway
+
+Both live in `gate.js`. The smoke is a handful of tiny sprites — 11, 16 and
+21 pixels across — with a dithered edge, drawn much larger than they are
+made, so the dither is magnified into the same chunky pixels as everything
+else. They rise off the bottom, thickest under the trunk, and they block
+light rather than adding it, because additive smoke is invisible against a
+lit canopy.
+
+The sway is the picture drawn as 48 bands, each slid sideways. How freely a
+band moves falls away as it goes down, so the crown swings and the roots do
+not. Three waves at different lengths run through it, each lagging further
+down the tree, so what you see is a bend travelling up through the branches;
+a slow envelope on top makes it arrive in gusts. Bands never move up or
+down — that tears a gap above them.
+
 ## The pixel grid
 
 Every canvas on the site is drawn at a third of the screen's size and blown
