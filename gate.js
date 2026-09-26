@@ -71,7 +71,7 @@
     const sides = 3 + (k % 10);
     const rot   = t * 0.22 * (k % 2 ? 1 : -1) + k * 0.37;
 
-    g.strokeStyle = `hsla(${hue + k * 23},100%,${56 + (k % 3) * 8}%,${0.66 * fade})`;
+    g.strokeStyle = `hsla(${hue + k * 23},100%,${52 + (k % 3) * 6}%,${0.5 * fade})`;
     g.lineWidth = 0.8 + f * 5;
     polygon(g, rr, sides, rot);
     g.stroke();
@@ -79,7 +79,7 @@
     if (detail < 1) return;
 
     // a counter-turning polygon nested inside
-    g.strokeStyle = `hsla(${hue + k * 23 + 150},100%,68%,${0.6 * fade})`;
+    g.strokeStyle = `hsla(${hue + k * 23 + 150},100%,64%,${0.4 * fade})`;
     g.lineWidth = 0.6 + f * 2.4;
     polygon(g, rr * 0.72, sides + 2, -rot * 1.5);
     g.stroke();
@@ -93,7 +93,7 @@
       g.moveTo(Math.cos(ang) * rr * 0.72, Math.sin(ang) * rr * 0.72);
       g.lineTo(Math.cos(ang) * rr, Math.sin(ang) * rr);
     }
-    g.strokeStyle = `hsla(${hue + k * 23 + 60},100%,72%,${0.42 * fade})`;
+    g.strokeStyle = `hsla(${hue + k * 23 + 60},100%,68%,${0.26 * fade})`;
     g.lineWidth = 0.6;
     g.stroke();
 
@@ -108,7 +108,7 @@
       g.moveTo(x + nr, y);
       g.arc(x, y, nr, 0, Math.PI * 2);
     }
-    g.strokeStyle = `hsla(${hue + k * 23 + 210},100%,76%,${0.55 * fade})`;
+    g.strokeStyle = `hsla(${hue + k * 23 + 210},100%,72%,${0.32 * fade})`;
     g.lineWidth = 0.7;
     g.stroke();
   }
@@ -330,7 +330,7 @@
     // feedback: last frame, scaled up, underneath everything
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.clearRect(0, 0, front.width, front.height);
-    g.globalAlpha = phase === "tunnel" ? 0.82 + rush * 0.1 : 0.62;
+    g.globalAlpha = phase === "tunnel" ? 0.66 + rush * 0.12 : 0.62;
     const zoom = 1 + (phase === "tunnel" ? 0.028 + rush * 0.05 : 0.012);
     const dw = front.width * zoom, dh = front.height * zoom;
     g.drawImage(back, (front.width - dw) / 2, (front.height - dh) / 2, dw, dh);
@@ -338,14 +338,14 @@
     g.setTransform(SC, 0, 0, SC, 0, 0);
 
     // darken what carried over, so trails decay instead of smearing white
-    g.fillStyle = `rgba(0,0,0,${phase === "tunnel" ? 0.1 : 0.2})`;
+    g.fillStyle = `rgba(0,0,0,${phase === "tunnel" ? 0.26 : 0.2})`;
     g.fillRect(0, 0, W, H);
 
     g.globalCompositeOperation = "lighter";
     g.lineCap = "round";
 
     const RINGS  = Math.round((phase === "tunnel" ? 46 : 20) * quality);
-    const SYM    = phase === "tunnel" ? Math.round(2 + 10 * quality) : 3;
+    const SYM    = phase === "tunnel" ? Math.round(2 + 5 * quality) : 3;
     const detail = phase === "tunnel"
       ? (quality > 0.85 ? 3 : quality > 0.6 ? 2 : quality > 0.4 ? 1 : 0)
       : (quality > 0.7 ? 1 : 0);
@@ -449,7 +449,7 @@
 
     if (zoom > 0) {
       const s = 1 + 15 * zoom * zoom * zoom;
-      kc.globalAlpha = Math.max(0, 1 - zoom * zoom * 1.25);
+      kc.globalAlpha = Math.max(0, 1 - Math.pow(zoom, 2.6));
       kc.translate(MX, MY); kc.scale(s, s); kc.translate(-MX, -MY);
     }
 
@@ -504,6 +504,16 @@
     phase = next;
     phaseAt = performance.now();
     document.body.dataset.phase = next;
+    if (next === "tunnel") {
+      /* The feedback buffers still hold the lit sky. Feeding that
+         forward is what bleached the tunnel to grey. */
+      for (const [cv, cx2] of [[A, a], [B, b]]) {
+        cx2.setTransform(1, 0, 0, 1, 0, 0);
+        cx2.fillStyle = "#000";
+        cx2.fillRect(0, 0, cv.width, cv.height);
+        cx2.setTransform(SC, 0, 0, SC, 0, 0);
+      }
+    }
   }
 
   const SWALLOW_MS = 1150;          // how long the mouth takes to take you
@@ -521,7 +531,7 @@
       else if (gate) gate.style.display = "none";
     })(t0);
 
-    setTimeout(() => go("tunnel"), SWALLOW_MS * 0.5);
+    setTimeout(() => go("tunnel"), SWALLOW_MS * 0.62);
     setTimeout(land, SWALLOW_MS + TUNNEL_MS);
   }
 

@@ -68,11 +68,11 @@
   animation:keeperBreathe 13s ease-in-out infinite;
   /* the art is on black — feather it so it never reads as a pasted box */
   -webkit-mask-image:
-    radial-gradient(ellipse 92% 90% at 50% 48%,#000 68%,transparent 100%),
+    radial-gradient(ellipse 86% 84% at 50% 48%,#000 52%,transparent 100%),
     linear-gradient(to bottom,transparent 0,#000 7%,#000 93%,transparent 100%);
   -webkit-mask-composite:source-in;
           mask-image:
-    radial-gradient(ellipse 92% 90% at 50% 48%,#000 68%,transparent 100%),
+    radial-gradient(ellipse 86% 84% at 50% 48%,#000 52%,transparent 100%),
     linear-gradient(to bottom,transparent 0,#000 7%,#000 93%,transparent 100%);
           mask-composite:intersect;
 }
@@ -87,7 +87,8 @@
    layer thousands of pixels wide */
 .gate.gone .keeper{animation:none}
 .gate.gone #keeper{animation:none;filter:none}
-.gate.gone .enter,.gate.gone .creed{
+.gate.gone .enter,.gate.gone .creed,
+.gate.gone .standing,.gate.gone .terms{
   opacity:0;transition:opacity .3s;pointer-events:none;
 }
 
