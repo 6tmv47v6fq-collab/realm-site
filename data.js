@@ -34,6 +34,17 @@ const SUPPLY_PER_ROUND = 111;
 const EXTRA_IN_FINAL_ROUND = 1;
 const TOTAL_BEINGS = SUPPLY_PER_ROUND * 10 + EXTRA_IN_FINAL_ROUND;
 
+/* What a being costs to mint, in SOL. Round one is 0.15, and every round
+   after costs 0.1 more than the one before — so the tenth is 1.05. */
+const PRICE_ROUND_1 = 0.15;
+const PRICE_STEP    = 0.1;
+function priceFor(round) {
+  return Math.round((PRICE_ROUND_1 + (round - 1) * PRICE_STEP) * 100) / 100;
+}
+
+/* Taken on every resale, for ever. This is the only income that recurs. */
+const ROYALTY_PERCENT = 5;
+
 /* how many this round holds */
 function supplyFor(round) {
   return SUPPLY_PER_ROUND + (round === 10 ? EXTRA_IN_FINAL_ROUND : 0);

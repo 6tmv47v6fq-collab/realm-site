@@ -14,12 +14,15 @@
   const round   = ROUND;
   const current = SECTORS[round - 1];
   const roundSupply = supplyFor(round);
+  const price       = priceFor(round);
 
   /* ---------- fill in the numbers ---------- */
   $$("[data-round]").forEach(n => n.textContent = round);
   $$("[data-sector-name]").forEach(n => n.textContent = current.name);
   $$("[data-supply]").forEach(n => n.textContent = roundSupply);
   $$("[data-total]").forEach(n => n.textContent = TOTAL_BEINGS.toLocaleString());
+  $$("[data-price]").forEach(n => n.textContent = price + " SOL");
+  $$("[data-royalty]").forEach(n => n.textContent = ROYALTY_PERCENT + "%");
   $$("[data-minted]").forEach(n => n.textContent = CONFIG.minted);
   const rl = $("[data-round-label]");
   if (rl) rl.textContent = `round ${round}`;
@@ -140,7 +143,7 @@
     const n = supplyFor(i + 1);
     li.innerHTML = `<span class="r">Round ${i + 1}${state === "now" ? " &middot; live" : ""}</span>
                     <span class="s">${i < round ? sector.name : "Sealed sector"}</span>
-                    <span class="d">${n} beings &middot; max 3 per wallet${
+                    <span class="d">${n} beings &middot; ${priceFor(i + 1)} SOL${
                       n > SUPPLY_PER_ROUND ? " &middot; the last one ever" : ""}</span>`;
     timeline.appendChild(li);
   });
