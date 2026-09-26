@@ -2,8 +2,9 @@
    REALM — the shared ground.
 
    One look, everywhere: near-black, a hairline of gold, and pixels.
-   Pixelify Sans names things, Silkscreen shouts the small labels, and
-   Space Grotesk explains at any length you can still read. No gradients
+   One typeface, Pixelify Sans, for every word on the site. A pixel face
+   loses its legs at small sizes, so nothing here is set below 0.66rem and
+   the lines are given more air than a normal face would need. No gradients
    running through text, no coloured glass boxes, no rounded corners.
 
    Every canvas on the site is drawn at a third of the screen's size and
@@ -37,9 +38,9 @@ body{
   margin:0;
   background:var(--void);
   color:var(--text);
-  font-family:'Space Grotesk',system-ui,sans-serif;
+  font-family:'Pixelify Sans',system-ui,sans-serif;
   font-weight:300;
-  line-height:1.62;
+  line-height:1.78;
   overflow-x:hidden;
   -webkit-font-smoothing:antialiased;
 }
@@ -58,17 +59,12 @@ canvas{
 
 /* ---------- anything that names something ---------- */
 .panel h2,.tier .name,.card h3,.chapter h3,.timeline .s,.qty-num,.pill{
-  font-family:'Pixelify Sans','Space Grotesk',system-ui,sans-serif;font-weight:700;
-}
-
-/* the small shouted labels get the blockier of the two pixel faces */
-.pill,.bar-label,.limit,.card .who,.chapter .meta,.timeline .r,.tier .count{
-  font-family:'Silkscreen','Space Grotesk',system-ui,sans-serif;
+  font-family:'Pixelify Sans',system-ui,sans-serif;font-weight:700;
 }
 
 /* ---------- a small label above a thing ---------- */
 .eyebrow{
-  margin:0;font-size:.56rem;letter-spacing:.3em;text-transform:uppercase;
+  margin:0;font-size:.82rem;letter-spacing:.2em;text-transform:uppercase;
   color:var(--faint);
 }
 
@@ -76,7 +72,7 @@ canvas{
 .btn{
   display:inline-block;padding:13px 22px;text-decoration:none;cursor:pointer;
   background:#000;border:1px solid var(--line);color:var(--bone);
-  font-family:'Pixelify Sans','Space Grotesk',system-ui,sans-serif;font-weight:700;
+  font-family:'Pixelify Sans',system-ui,sans-serif;font-weight:700;
   font-size:.82rem;letter-spacing:.2em;text-transform:uppercase;
   transition:border-color .25s,background .25s;
 }
@@ -89,7 +85,7 @@ canvas{
 .mint-card{padding:22px 20px;border:1px solid var(--line);background:var(--ink)}
 .mint-head{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
 .pill{
-  font-size:.58rem;letter-spacing:.24em;text-transform:uppercase;
+  font-size:.70rem;letter-spacing:.17em;text-transform:uppercase;
   padding:5px 11px;border:1px solid var(--line);color:var(--gold);
 }
 .pill.soft{color:var(--dim);border-color:rgba(157,143,196,.28)}
@@ -97,7 +93,7 @@ canvas{
 .bar{height:3px;background:rgba(244,239,228,.1);overflow:hidden}
 .bar-fill{height:100%;width:0;background:var(--gold);transition:width .8s ease-out}
 .bar-label{
-  margin:10px 0 0;font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;
+  margin:10px 0 0;font-size:.70rem;letter-spacing:.17em;text-transform:uppercase;
   color:var(--dim);
 }
 
@@ -109,10 +105,10 @@ canvas{
 .step:hover{border-color:var(--line-lit);color:var(--gold)}
 .qty-num{font-size:2rem;min-width:46px;text-align:center;line-height:1}
 .limit{
-  text-align:center;margin:0;font-size:.56rem;letter-spacing:.26em;
+  text-align:center;margin:0;font-size:.82rem;letter-spacing:.18em;
   text-transform:uppercase;color:var(--faint);
 }
-.fine{font-size:.74rem;color:var(--dim);text-align:center;margin:14px 0 0;line-height:1.55}
+.fine{font-size:.80rem;color:var(--dim);text-align:center;margin:14px 0 0;line-height:1.55}
 
 /* ---------- the eight tiers ---------- */
 .tiers{display:grid;gap:1px;background:var(--line);border:1px solid var(--line)}
@@ -126,10 +122,10 @@ canvas{
 }
 .tier canvas{width:var(--fs,30px);height:var(--fs,30px);display:block}
 .tier .name{flex:1;font-size:.92rem;letter-spacing:.11em}
-.tier .count{text-align:right;font-size:.56rem;letter-spacing:.22em;
+.tier .count{text-align:right;font-size:.82rem;letter-spacing:.16em;
   text-transform:uppercase;color:var(--faint);line-height:1.5}
 .tier .count b{
-  display:block;font-family:'Pixelify Sans','Space Grotesk',system-ui,sans-serif;
+  display:block;font-family:'Pixelify Sans',system-ui,sans-serif;
   font-weight:800;font-size:1.05rem;letter-spacing:.02em;color:var(--bone);
 }
 .tier.god{background:#0b0715}
@@ -139,23 +135,23 @@ canvas{
 .cards{display:grid;gap:1px;background:var(--line);border:1px solid var(--line)}
 .card{padding:20px;background:var(--ink)}
 .card h3{
-  margin:0 0 9px;font-size:.78rem;letter-spacing:.22em;text-transform:uppercase;
+  margin:0 0 9px;font-size:.84rem;letter-spacing:.16em;text-transform:uppercase;
   color:var(--gold);
 }
 .card p{margin:0;color:var(--dim);font-size:.9rem}
 .card .who{
   margin:11px 0 0;padding-top:10px;border-top:1px solid rgba(227,186,92,.14);
-  font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);
+  font-size:.70rem;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);
 }
 .disclaimer{
-  margin:20px 0 0;font-size:.72rem;line-height:1.6;color:var(--faint);
+  margin:20px 0 0;font-size:.84rem;line-height:1.6;color:var(--faint);
   border-left:1px solid var(--line);padding-left:14px;
 }
 
 /* ---------- the story ---------- */
 .chapters{display:grid;gap:14px}
 .chapter{padding:20px;border:1px solid var(--line);background:var(--ink)}
-.chapter .meta{margin:0 0 9px;font-size:.56rem;letter-spacing:.28em;
+.chapter .meta{margin:0 0 9px;font-size:.82rem;letter-spacing:.2em;
   text-transform:uppercase;color:var(--gold)}
 .chapter h3{margin:0 0 9px;font-size:1.05rem;letter-spacing:.06em}
 .chapter p.body{margin:0;color:var(--dim);font-size:.94rem;max-width:62ch}
@@ -167,7 +163,7 @@ canvas{
 .chapter.sealed p.body{display:none}
 .chapter.sealed::after{
   content:'Sealed until the realm opens this far';
-  display:block;font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;
+  display:block;font-size:.70rem;letter-spacing:.17em;text-transform:uppercase;
   color:var(--faint);
 }
 
@@ -181,13 +177,13 @@ canvas{
 .timeline li.done::before{background:var(--dim);border-color:var(--dim)}
 .timeline li.now::before{background:var(--gold);border-color:var(--gold)}
 .timeline .r{
-  font-family:'Pixelify Sans','Space Grotesk',system-ui,sans-serif;font-weight:700;
-  font-size:.58rem;letter-spacing:.26em;text-transform:uppercase;color:var(--faint);
+  font-family:'Pixelify Sans',system-ui,sans-serif;font-weight:700;
+  font-size:.70rem;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);
 }
 .timeline li.now .r{color:var(--gold)}
 .timeline .s{display:block;font-size:1rem;letter-spacing:.05em;color:var(--text)}
 .timeline li:not(.done):not(.now) .s{color:var(--faint)}
-.timeline .d{font-size:.74rem;color:var(--dim)}
+.timeline .d{font-size:.80rem;color:var(--dim)}
 
 /* ---------- the questions ---------- */
 details{border:1px solid var(--line);padding:14px 16px;margin-bottom:9px;background:var(--ink)}
