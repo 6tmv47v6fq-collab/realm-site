@@ -90,14 +90,14 @@ A link only appears once it is real. The placeholders (`https://x.com/`,
 |------|------------|
 | **`data.js`** | **the only file you edit** — round, mint link, sectors, rarity |
 | `index.html` | the whole site |
-| `styles.css` | the shared look: black, gold hairline, two typefaces |
+| `styles.css` | the shared look: black, gold hairline, pixel type |
 | `landing.css` | the door, the chamber and the panels |
 | `gate.js` | the tree, the rush into the doorway, and the tunnel |
 | `journey.js` | the chamber — the room, everything alive in it, and the menu |
 | `landing.js` | fills the panels from `data.js` |
 | `forms.js` | draws a being for a tier |
-| `tree.jpg` | the tree with the door in it |
-| `chamber.jpg` | the room you come out into |
+| `tree.png` | the tree with the door in it, as pixel art |
+| `chamber.png` | the room you come out into, as pixel art |
 | `server.js` | the tiny server Railway runs |
 | `package.json` | tells Railway how to start it |
 
@@ -107,7 +107,7 @@ Each picture also has a `-small` version, used on phones.
 
 ## Replacing the artwork
 
-Drop in a new `tree.jpg` (and `tree-small.jpg`) and the door screen uses it.
+Drop in a new `tree.png` (and `tree-small.png`) and the door screen uses it.
 Two lines at the top of `gate.js` say where things are in it:
 
 ```js
@@ -119,11 +119,22 @@ Both are fractions — how far across, how far down. If the new picture's
 doorway sits somewhere else, change those two numbers and the rush will aim
 at it.
 
-Same for `chamber.jpg`: the fractions near the top of `journey.js`
+Same for `chamber.png`: the fractions near the top of `journey.js`
 (`EYE_HIGH`, `EYE_BIG`, `DOOR`, `FLOOR`) say where the light lands in the
 room.
 
 Both pictures are drawn full bleed, so anything tall and centred will work.
+
+## The pixel grid
+
+Every canvas on the site is drawn at a third of the screen's size and blown
+back up by the browser with hard edges (`image-rendering: pixelated`). One
+line, `const PX = 3` at the top of `gate.js` and `journey.js`, sets how chunky
+the pixels are — larger number, bigger pixels. It costs a ninth of the drawing
+work, which is why the whole site got faster when it went pixel.
+
+Because of that, the two pictures never need to be big: they are 460 pixels
+across with a 44-colour palette, about 100 KB each.
 
 ---
 

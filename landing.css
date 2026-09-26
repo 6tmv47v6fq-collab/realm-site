@@ -10,6 +10,7 @@
   position:fixed;inset:0;z-index:-1;width:100%;height:100%;
   display:block;pointer-events:none;
 }
+canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 
 /* ---------- the door in the tree ---------- */
 .gate{
@@ -54,7 +55,7 @@
 .enter:active{transform:scale(.97)}
 .enter-in{
   position:relative;z-index:2;display:block;
-  font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-weight:800;
+  font-family:'Pixelify Sans','Space Grotesk',system-ui,sans-serif;font-weight:700;
   font-size:clamp(1rem,4.9vw,1.36rem);letter-spacing:.19em;line-height:1;
   text-transform:uppercase;white-space:nowrap;color:#f4efe4;
 }
@@ -78,7 +79,7 @@
 
 .panel-in{max-width:620px;margin:0 auto}
 .panel h2{
-  font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-weight:800;
+  font-family:'Pixelify Sans','Space Grotesk',system-ui,sans-serif;font-weight:700;
   font-size:1.35rem;margin:0 0 6px;letter-spacing:.2em;text-transform:uppercase;
   color:#f4efe4;
 }
@@ -95,7 +96,7 @@
    THE DOOR'S OWN LETTERING
    ============================================================ */
 
-.enter-in{font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-weight:800;}
+.enter-in{font-family:'Pixelify Sans','Space Grotesk',system-ui,sans-serif;font-weight:700;}
 
 .enter-in{
   letter-spacing:.14em;color:#f7e9c8;
@@ -181,6 +182,7 @@
 }
 
 .j-where{
+  font-family:'Silkscreen','Space Grotesk',system-ui,sans-serif;
   margin:0;padding:6px 16px 7px;pointer-events:none;
   background:#000;border:1px solid rgba(227,186,92,.28);
   font-family:'Space Grotesk',system-ui,sans-serif;
@@ -212,12 +214,12 @@
 .slab:active{transform:translateY(1px)}
 
 .slab-in{
-  font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-weight:800;
+  font-family:'Pixelify Sans','Space Grotesk',system-ui,sans-serif;font-weight:700;
   font-size:clamp(1rem,4.6vw,1.34rem);letter-spacing:.17em;line-height:1;
   white-space:nowrap;
 }
 .slab-note{
-  font-family:'Space Grotesk',system-ui,sans-serif;font-style:normal;
+  font-family:'Silkscreen','Space Grotesk',system-ui,sans-serif;font-style:normal;
   font-size:.54rem;letter-spacing:.24em;text-transform:uppercase;
   color:#7b6ea0;white-space:nowrap;
 }
@@ -236,11 +238,11 @@
 }
 .standing div{display:flex;flex-direction:column;gap:3px;align-items:center}
 .standing dt{
-  margin:0;font-family:'Space Grotesk',system-ui,sans-serif;
+  margin:0;font-family:'Silkscreen','Space Grotesk',system-ui,sans-serif;
   font-size:.56rem;letter-spacing:.26em;text-transform:uppercase;color:#7b6ea0;
 }
 .standing dd{
-  margin:0;font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-weight:700;
+  margin:0;font-family:'Pixelify Sans','Space Grotesk',system-ui,sans-serif;font-weight:700;
   font-size:.78rem;letter-spacing:.05em;color:#f4efe4;
 }
 .standing dd.shut{color:#9d8fc4;font-weight:500}

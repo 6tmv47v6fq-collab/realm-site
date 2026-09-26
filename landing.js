@@ -94,9 +94,9 @@
     const slot = document.createElement("span");
     slot.className = "form-slot";
     if (window.RealmForms) {
-      const form = RealmForms.makeForm({
+      const form = RealmForms.pixelate(RealmForms.makeForm({
         id: 100 + i, n: i + 1, tier: t.key, tierName: t.name, color: t.color
-      });
+      }), 14 + i * 2);
       form.style.setProperty("--fs", (21 + i * 3.6).toFixed(0) + "px");
       slot.appendChild(form);
     }

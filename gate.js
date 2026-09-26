@@ -26,8 +26,8 @@
   const AIM = { x: 0.545, y: 0.738 };   // the doorway — where the zoom goes
   const SUN = { x: 0.513, y: 0.436 };   // the burst of light in the canopy
 
-  const FULL = "tree.jpg";
-  const SMALL = "tree-small.jpg";       // lighter, for narrow screens
+  const FULL = "tree.png";
+  const SMALL = "tree-small.png";       // lighter, for narrow screens
 
   const canvas = document.getElementById("sky");
   const tree   = document.getElementById("tree");
@@ -42,14 +42,25 @@
   const B = document.createElement("canvas"), b = B.getContext("2d");
   let front = A, back = B, fc = a, bc = b;
 
-  let W = 0, H = 0, cx = 0, cy = 0, R = 0, SC = 1, DPR = 1;
+  let W = 0, H = 0, cx = 0, cy = 0, R = 0, SC = 1, GW = 0, GH = 0;
+
+  /* ---------- the grid ----------
+     Everything is drawn into a canvas a fraction of the screen's size and
+     then blown up by the browser with hard edges. That one decision makes
+     the artwork, the sway, the light in the doorway and the whole tunnel
+     pixel art together, rather than each needing its own treatment. Three
+     screen pixels to one drawn pixel, so it reads the same on a phone as
+     on a desk. */
+  const PX = 3;
 
   function resize() {
     W = window.innerWidth;
     H = window.innerHeight;
-    DPR = Math.min(window.devicePixelRatio || 1, 1.6);
+    GW = Math.max(1, Math.round(W / PX));
+    GH = Math.max(1, Math.round(H / PX));
 
-    canvas.width = W; canvas.height = H;
+    canvas.width = GW; canvas.height = GH;
+    ctx.setTransform(GW / W, 0, 0, GH / H, 0, 0);
     SC = W > 900 ? 0.5 : 0.62;            // buffer scale
     const bw = Math.max(1, Math.floor(W * SC)), bh = Math.max(1, Math.floor(H * SC));
     for (const c of [A, B]) { c.width = bw; c.height = bh; }
@@ -58,9 +69,8 @@
     fc.setTransform(SC, 0, 0, SC, 0, 0);
     bc.setTransform(SC, 0, 0, SC, 0, 0);
 
-    tree.width  = Math.max(1, Math.round(W * DPR));
-    tree.height = Math.max(1, Math.round(H * DPR));
-    tc.setTransform(DPR, 0, 0, DPR, 0, 0);
+    tree.width  = GW; tree.height = GH;
+    tc.setTransform(GW / W, 0, 0, GH / H, 0, 0);
 
     bakeHush();
     seedAir();
@@ -359,7 +369,7 @@
 
   /* ---------- one frame of the tree ---------- */
   function paintTree(t, dt, pull) {
-    tc.setTransform(DPR, 0, 0, DPR, 0, 0);
+    tc.setTransform(GW / W, 0, 0, GH / H, 0, 0);
     tc.clearRect(0, 0, W, H);
     if (!art) return;
 

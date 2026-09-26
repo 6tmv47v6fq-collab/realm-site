@@ -182,5 +182,17 @@ window.RealmForms = (() => {
     return cv;
   }
 
-  return { seeded, hexA, hsla, TIER_HUE, TIER_STYLE, FORM, makeForm, buildSprites, SPRITE };
+  /* ---------- onto the grid ----------
+     The same recipe the rest of the site uses: draw it properly, shrink it
+     with smoothing so nothing aliases, and let whoever shows it blow it
+     back up with hard edges. */
+  function pixelate(cv, grid) {
+    const out = document.createElement("canvas");
+    out.width = out.height = grid;
+    out.getContext("2d").drawImage(cv, 0, 0, grid, grid);
+    return out;
+  }
+
+  return { seeded, hexA, hsla, TIER_HUE, TIER_STYLE, FORM, makeForm, buildSprites,
+           SPRITE, pixelate };
 })();

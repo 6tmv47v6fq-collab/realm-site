@@ -1,11 +1,14 @@
 /* ============================================================
    REALM — the shared ground.
 
-   One look, everywhere: near-black, a hairline of gold, Syne for
-   anything that names something and Space Grotesk for anything that
-   explains it. No gradients running through text, no coloured glass
-   boxes, no rounded corners. The artwork is the colour in this site;
-   everything around it holds still so that it can be.
+   One look, everywhere: near-black, a hairline of gold, and pixels.
+   Pixelify Sans names things, Silkscreen shouts the small labels, and
+   Space Grotesk explains at any length you can still read. No gradients
+   running through text, no coloured glass boxes, no rounded corners.
+
+   Every canvas on the site is drawn at a third of the screen's size and
+   blown up with hard edges, so the artwork and everything moving in it
+   land on the same grid.
    ============================================================ */
 
 :root{
@@ -46,9 +49,21 @@ body{
   display:block;pointer-events:none;
 }
 
+/* Every canvas here is drawn small and stretched to fill the screen.
+   Without this the browser smooths it back into mush. */
+canvas{
+  image-rendering:pixelated;
+  image-rendering:crisp-edges;            /* the older name, for Safari */
+}
+
 /* ---------- anything that names something ---------- */
 .panel h2,.tier .name,.card h3,.chapter h3,.timeline .s,.qty-num,.pill{
-  font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-weight:800;
+  font-family:'Pixelify Sans','Space Grotesk',system-ui,sans-serif;font-weight:700;
+}
+
+/* the small shouted labels get the blockier of the two pixel faces */
+.pill,.bar-label,.limit,.card .who,.chapter .meta,.timeline .r,.tier .count{
+  font-family:'Silkscreen','Space Grotesk',system-ui,sans-serif;
 }
 
 /* ---------- a small label above a thing ---------- */
@@ -61,7 +76,7 @@ body{
 .btn{
   display:inline-block;padding:13px 22px;text-decoration:none;cursor:pointer;
   background:#000;border:1px solid var(--line);color:var(--bone);
-  font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-weight:800;
+  font-family:'Pixelify Sans','Space Grotesk',system-ui,sans-serif;font-weight:700;
   font-size:.82rem;letter-spacing:.2em;text-transform:uppercase;
   transition:border-color .25s,background .25s;
 }
@@ -114,7 +129,7 @@ body{
 .tier .count{text-align:right;font-size:.56rem;letter-spacing:.22em;
   text-transform:uppercase;color:var(--faint);line-height:1.5}
 .tier .count b{
-  display:block;font-family:'Syne','Space Grotesk',system-ui,sans-serif;
+  display:block;font-family:'Pixelify Sans','Space Grotesk',system-ui,sans-serif;
   font-weight:800;font-size:1.05rem;letter-spacing:.02em;color:var(--bone);
 }
 .tier.god{background:#0b0715}
@@ -166,7 +181,7 @@ body{
 .timeline li.done::before{background:var(--dim);border-color:var(--dim)}
 .timeline li.now::before{background:var(--gold);border-color:var(--gold)}
 .timeline .r{
-  font-family:'Syne','Space Grotesk',system-ui,sans-serif;font-weight:800;
+  font-family:'Pixelify Sans','Space Grotesk',system-ui,sans-serif;font-weight:700;
   font-size:.58rem;letter-spacing:.26em;text-transform:uppercase;color:var(--faint);
 }
 .timeline li.now .r{color:var(--gold)}

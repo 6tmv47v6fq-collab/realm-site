@@ -54,7 +54,11 @@ window.RealmJourney = (() => {
   const FLOOR    = 0.735;                     // where the floor begins
 
   let art = null;
-  let W = 0, H = 0, DPR = 1;
+  let W = 0, H = 0, GW = 0, GH = 0;
+
+  /* Drawn small and blown up hard, the same grid the door uses, so the
+     room and everything living in it are pixel art too. */
+  const PX = 3;
 
   const rand = (a, b) => a + Math.random() * (b - a);
 
@@ -64,15 +68,15 @@ window.RealmJourney = (() => {
     img.decoding = "async";
     img.onload = () => { art = img; resize(); };
     img.src = (window.innerWidth <= 700 || (window.devicePixelRatio || 1) < 2)
-      ? "chamber-small.jpg" : "chamber.jpg";
+      ? "chamber-small.png" : "chamber.png";
   })();
 
   function resize() {
-    DPR = Math.min(window.devicePixelRatio || 1, 1.5);
     W = window.innerWidth; H = window.innerHeight;
-    cv.width  = Math.max(1, Math.round(W * DPR));
-    cv.height = Math.max(1, Math.round(H * DPR));
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    GW = Math.max(1, Math.round(W / PX));
+    GH = Math.max(1, Math.round(H / PX));
+    cv.width = GW; cv.height = GH;
+    ctx.setTransform(GW / W, 0, 0, GH / H, 0, 0);
     bakeOverlay();
     seedMotes();
   }
@@ -151,7 +155,8 @@ window.RealmJourney = (() => {
       const t = TIERS.find(x => x.key === tier);
       if (!t) return null;
       return {
-        img: RealmForms.makeForm({ id: 700 + n, n: n + 1, tier, tierName: t.name, color: t.color }),
+        img: RealmForms.pixelate(
+          RealmForms.makeForm({ id: 700 + n, n: n + 1, tier, tierName: t.name, color: t.color }), 20),
         x: rand(0.08, 0.92), y: rand(0.16, 0.66),
         vx: rand(0.004, 0.017) * (Math.random() < 0.5 ? -1 : 1),
         vy: rand(0.002, 0.009) * (Math.random() < 0.5 ? -1 : 1),
@@ -194,7 +199,7 @@ window.RealmJourney = (() => {
   let ringT = 0;
 
   function paint(t, dt) {
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.setTransform(GW / W, 0, 0, GH / H, 0, 0);
     ctx.fillStyle = "#03010a";
     ctx.fillRect(0, 0, W, H);
     if (!art) return;
@@ -329,7 +334,9 @@ window.RealmJourney = (() => {
       ctx.drawImage(pocket(), bx - d, by - d, d * 2, d * 2);
 
       ctx.globalAlpha = 0.72 + 0.22 * Math.sin(t * 0.7 + b.ph);
+      ctx.imageSmoothingEnabled = false;      // a sprite keeps its pixels
       ctx.drawImage(b.img, bx - d / 2, by - d / 2, d, d);
+      ctx.imageSmoothingEnabled = true;
       ctx.globalAlpha = 1;
 
       ctx.globalCompositeOperation = "lighter";
