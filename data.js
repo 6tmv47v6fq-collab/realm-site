@@ -29,6 +29,16 @@ const CONFIG = {
 
 const SUPPLY_PER_ROUND = 111;
 
+/* Ten rounds of 111 is 1,110. The tenth round holds one more, which is what
+   makes the total 1,111. Change EXTRA_IN_FINAL_ROUND to 0 to go back. */
+const EXTRA_IN_FINAL_ROUND = 1;
+const TOTAL_BEINGS = SUPPLY_PER_ROUND * 10 + EXTRA_IN_FINAL_ROUND;
+
+/* how many this round holds */
+function supplyFor(round) {
+  return SUPPLY_PER_ROUND + (round === 10 ? EXTRA_IN_FINAL_ROUND : 0);
+}
+
 /* Rarity breakdown per round — must add up to 111. */
 const TIERS = [
   { name: "Common",    count: 40, key: "common",    color: "#9ca3af" , accent: "#e5e7eb" },

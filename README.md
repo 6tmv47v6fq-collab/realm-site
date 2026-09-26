@@ -1,6 +1,7 @@
 # REALM
 
-10 sectors of the DMT realm. 10 rounds of 111 beings, max 3 per wallet, on Solana.
+10 sectors of the DMT realm. 1,111 beings, max 3 per wallet, on Solana.
+Nine rounds of 111 and a tenth of 112.
 
 One page. No build step, no framework, nothing to install.
 
@@ -76,6 +77,20 @@ between the quotes. Keep all ten entries.
 ### Changing the rarity split
 
 The `TIERS` list holds the eight tiers. **The counts must add up to 111.**
+
+### Why the tenth round is 112
+
+Ten rounds of 111 is 1,110. The tenth holds one extra so the total is 1,111.
+Two lines in `data.js` do it:
+
+```js
+const EXTRA_IN_FINAL_ROUND = 1;
+const TOTAL_BEINGS = SUPPLY_PER_ROUND * 10 + EXTRA_IN_FINAL_ROUND;   // 1,111
+```
+
+Set `EXTRA_IN_FINAL_ROUND` to 0 and everything on the site goes back to 1,110
+on its own — the door, the FAQ, the rounds list and the mint counter all read
+from it.
 
 ### Social links
 

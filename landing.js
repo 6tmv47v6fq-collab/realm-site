@@ -13,11 +13,13 @@
 
   const round   = ROUND;
   const current = SECTORS[round - 1];
+  const roundSupply = supplyFor(round);
 
   /* ---------- fill in the numbers ---------- */
   $$("[data-round]").forEach(n => n.textContent = round);
   $$("[data-sector-name]").forEach(n => n.textContent = current.name);
-  $$("[data-supply]").forEach(n => n.textContent = SUPPLY_PER_ROUND);
+  $$("[data-supply]").forEach(n => n.textContent = roundSupply);
+  $$("[data-total]").forEach(n => n.textContent = TOTAL_BEINGS.toLocaleString());
   $$("[data-minted]").forEach(n => n.textContent = CONFIG.minted);
   const rl = $("[data-round-label]");
   if (rl) rl.textContent = `round ${round}`;
@@ -29,8 +31,8 @@
   const supply = $("#st-supply");
   if (supply) {
     supply.textContent = CONFIG.minted > 0
-      ? `${CONFIG.minted} of ${SUPPLY_PER_ROUND}`
-      : `none of ${SUPPLY_PER_ROUND} yet`;
+      ? `${CONFIG.minted} of ${roundSupply}`
+      : `none of ${roundSupply} yet`;
   }
 
   const status = $("#st-status");
@@ -43,7 +45,7 @@
   /* ---------- mint ---------- */
   const bar = $("[data-bar]");
   if (bar) {
-    const pct = Math.min(100, (CONFIG.minted / SUPPLY_PER_ROUND) * 100);
+    const pct = Math.min(100, (CONFIG.minted / roundSupply) * 100);
     requestAnimationFrame(() => bar.style.width = pct + "%");
   }
 
@@ -135,9 +137,11 @@
     const state = i < round - 1 ? "done" : i === round - 1 ? "now" : "";
     const li = document.createElement("li");
     li.className = state;
+    const n = supplyFor(i + 1);
     li.innerHTML = `<span class="r">Round ${i + 1}${state === "now" ? " &middot; live" : ""}</span>
                     <span class="s">${i < round ? sector.name : "Sealed sector"}</span>
-                    <span class="d">111 beings &middot; max 3 per wallet</span>`;
+                    <span class="d">${n} beings &middot; max 3 per wallet${
+                      n > SUPPLY_PER_ROUND ? " &middot; the last one ever" : ""}</span>`;
     timeline.appendChild(li);
   });
 
