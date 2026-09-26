@@ -127,6 +127,11 @@ Telegram and a marketplace link appear the same way when they are real.
 | `forms.js` | draws a being for a tier |
 | `tree.png` | the tree with the door in it, as pixel art |
 | `chamber.png` | the room you come out into, as pixel art |
+| `logo-bar.png` | the mark in the top bar |
+| `favicon-32.png`, `favicon-16.png` | the mark in the browser tab |
+| `apple-touch-icon.png` | the mark when the site is saved to a phone's home screen |
+| `og.png` | the picture that shows when the link is posted |
+| `collection.png` | the collection avatar for the launchpad — not used by the site |
 | `server.js` | the tiny server Railway runs |
 | `package.json` | tells Railway how to start it |
 
@@ -180,6 +185,35 @@ work, which is why the whole site got faster when it went pixel.
 
 Because of that, the two pictures never need to be big: they are 460 pixels
 across with a 44-colour palette, about 100 KB each.
+
+---
+
+## The logo
+
+The emblem is used in five places, cut differently for each.
+
+| Where | File | Cut |
+|-------|------|-----|
+| Top bar | `logo-bar.png` | the letters and the strong linework, 96px so a phone gets it pixel-for-pixel |
+| Browser tab | `favicon-32.png`, `favicon-16.png` | **not the emblem** — see below |
+| Phone home screen | `apple-touch-icon.png` | the letters, 180px |
+| Posted links | `og.png` | the whole emblem, with REALM under it |
+| Launchpad avatar | `collection.png` | the whole emblem, 1000px |
+
+**Why the tab icon is different.** A browser tab is 16 pixels across. The
+whole emblem shrunk that far is a gold smudge — the letters stop being
+letters somewhere around 40 pixels. So the tab icon is the emblem's heart
+drawn again from scratch at that size: the gold diamond, the violet ring
+inside it, the eye at the centre. It is four shapes, so it survives.
+
+Everything from 72 pixels up is the real emblem.
+
+The share picture is built by a script rather than by hand, so it can be
+remade if the wording changes. It lives in the scratchpad, not the repo —
+ask and it can be rebuilt.
+
+`collection.png` is the only one the site never loads. It is there for the
+launchpad, where the collection needs an avatar.
 
 ---
 

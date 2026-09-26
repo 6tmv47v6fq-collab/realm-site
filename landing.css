@@ -25,11 +25,33 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 /* nothing but the tunnel while you are in the tunnel */
 body[data-phase="tunnel"] .topbar{opacity:0;pointer-events:none}
 
+/* the mark and the wordmark travel together */
+.topbar .brand{
+  display:flex;align-items:center;gap:9px;
+  text-decoration:none;min-width:0;
+  -webkit-tap-highlight-color:transparent;
+}
+/* The file is 96px so a 3x phone gets it pixel-for-pixel. A 1x screen has to
+   shrink it, and that one case wants smoothing — nearest-neighbour would
+   throw two out of every three pixels away and the letters would fall apart. */
+.topbar .brandmark{
+  display:block;width:32px;height:32px;flex:none;
+  image-rendering:auto;
+  transition:opacity .25s ease;
+}
+.topbar .brand:hover .brandmark{opacity:.78}
+
 .topbar .mark{
   margin:0;font-family:'Pixelify Sans',system-ui,sans-serif;font-weight:700;
   font-size:.95rem;letter-spacing:.2em;color:#f4efe4;white-space:nowrap;
 }
 .topbar .mark b{color:#e3ba5c;font-weight:700}
+
+/* on a narrow phone the mark alone carries it */
+@media (max-width:380px){
+  .topbar .mark{font-size:.82rem;letter-spacing:.14em}
+  .topbar .brandmark{width:26px;height:26px}
+}
 
 .top-links{display:flex;gap:clamp(12px,4vw,20px);align-items:center}
 .top-links a{

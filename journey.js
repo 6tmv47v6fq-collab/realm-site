@@ -439,6 +439,19 @@ window.RealmJourney = (() => {
     if (e.key === "Escape" && window.RealmPanels) RealmPanels.hide();
   });
 
+  /* the mark in the bar does the same as the arrow, but only once you are
+     past the door — clicking it at the door would replay the whole entrance */
+  const brand = document.querySelector(".topbar .brand");
+  if (brand) brand.addEventListener("click", e => {
+    e.preventDefault();
+    if (document.querySelector(".panel:not([hidden])")) {
+      if (window.RealmPanels) RealmPanels.hide();
+      return;
+    }
+    const j = document.querySelector(".journey");
+    if (j && !j.hidden) window.location.reload();
+  });
+
   function start() {
     if (running) return;
     build();
