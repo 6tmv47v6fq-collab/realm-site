@@ -115,7 +115,7 @@
      them stays exactly where it is.
      ============================================================ */
 
-  let maskCv = null, PB = null, flowCv = null, flowC = null;
+  let maskCv = null, energyCv = null, PB = null, flowCv = null, flowC = null;
 
   function buildPortal() {
     const AW = 200, AH = Math.max(1, Math.round(AW * art.height / art.width));
@@ -146,21 +146,53 @@
     if (found < 40) return;
     pg.putImageData(px, 0, 0);
 
-    /* a stencil edge would show; soften it by passing the shape through
-       a much smaller copy of itself */
+    /* A stencil edge would show, so the shape is softened — but softening
+       spreads it outward, over the door and the stone frame. Clipping the
+       soft version back to the hard one puts the fade on the inside, so
+       the mask never reaches anything that is not light. */
     const tiny = document.createElement("canvas");
-    tiny.width = Math.max(1, AW / 2 | 0); tiny.height = Math.max(1, AH / 2 | 0);
+    tiny.width = Math.max(1, AW / 9 | 0); tiny.height = Math.max(1, AH / 9 | 0);
     tiny.getContext("2d").drawImage(probe, 0, 0, tiny.width, tiny.height);
+
     maskCv = document.createElement("canvas");
     maskCv.width = AW; maskCv.height = AH;
     const mg = maskCv.getContext("2d");
-    mg.drawImage(probe, 0, 0);                 // the shape itself, solid
-    mg.globalAlpha = 0.65;
-    mg.drawImage(tiny, 0, 0, AW, AH);          // and a soft edge on it
-    mg.globalAlpha = 1;
+    mg.drawImage(tiny, 0, 0, AW, AH);
+    mg.drawImage(tiny, 0, 0, AW, AH);
+    mg.globalCompositeOperation = "destination-in";
+    mg.drawImage(probe, 0, 0);
+    mg.globalCompositeOperation = "source-over";
 
-    PB = { x0: Math.max(0, x0 - 0.025), y0: Math.max(0, y0 - 0.025),
-           x1: Math.min(1, x1 + 0.025), y1: Math.min(1, y1 + 0.025) };
+    PB = { x0: Math.max(0, x0 - 0.02), y0: Math.max(0, y0 - 0.02),
+           x1: Math.min(1, x1 + 0.02), y1: Math.min(1, y1 + 0.02) };
+
+    /* ---------- the moving layer holds light and nothing else ----------
+       Scrolling the picture itself dragged the door's hinges and the
+       runes on the frame along with it. So the light is lifted out of
+       the picture, masked to itself, and then blurred until there is no
+       edge or letterform left in it — only the colour. That cloud is
+       what climbs; the door and the frame underneath never move. */
+    const EW = 180;
+    const EH = Math.max(2, Math.round(EW *
+      ((PB.y1 - PB.y0) * art.height) / ((PB.x1 - PB.x0) * art.width)));
+    const lift = document.createElement("canvas");
+    lift.width = EW; lift.height = EH;
+    const lg = lift.getContext("2d");
+    lg.drawImage(art,
+      PB.x0 * art.width, PB.y0 * art.height,
+      (PB.x1 - PB.x0) * art.width, (PB.y1 - PB.y0) * art.height,
+      0, 0, EW, EH);
+    lg.globalCompositeOperation = "destination-in";
+    lg.drawImage(maskCv,
+      PB.x0 * AW, PB.y0 * AH, (PB.x1 - PB.x0) * AW, (PB.y1 - PB.y0) * AH,
+      0, 0, EW, EH);
+
+    const smear = document.createElement("canvas");
+    smear.width = Math.max(1, EW / 8 | 0); smear.height = Math.max(1, EH / 8 | 0);
+    smear.getContext("2d").drawImage(lift, 0, 0, smear.width, smear.height);
+    energyCv = document.createElement("canvas");
+    energyCv.width = EW; energyCv.height = EH;
+    energyCv.getContext("2d").drawImage(smear, 0, 0, EW, EH);
 
     flowCv = document.createElement("canvas");
     flowCv.width = 240;
@@ -172,10 +204,8 @@
   /* One pass of the light, climbing. Two copies of it half a cycle
      apart, crossfaded, so it never reaches a seam and restarts. */
   function flowDoor(t, x, y, w, h, open) {
-    if (!maskCv || !PB || !flowC) return;
+    if (!maskCv || !PB || !flowC || !energyCv) return;
     const FW = flowCv.width, FH = flowCv.height;
-    const sx = PB.x0 * art.width,  sy = PB.y0 * art.height;
-    const sw = (PB.x1 - PB.x0) * art.width, sh = (PB.y1 - PB.y0) * art.height;
 
     flowC.setTransform(1, 0, 0, 1, 0, 0);
     flowC.clearRect(0, 0, FW, FH);
@@ -187,9 +217,9 @@
     const u = (t / 4.2) % 1;
     for (const o of [u, (u + 0.5) % 1]) {
       flowC.globalAlpha = Math.abs(2 * o - 1);
-      const lift = o * FH;
-      flowC.drawImage(art, sx, sy, sw, sh, 0, -lift,      FW, FH);
-      flowC.drawImage(art, sx, sy, sw, sh, 0, FH - lift,  FW, FH);
+      const up = o * FH;
+      flowC.drawImage(energyCv, 0, -up,     FW, FH);
+      flowC.drawImage(energyCv, 0, FH - up, FW, FH);
     }
 
     // filaments running up through it
@@ -215,8 +245,15 @@
       0, 0, FW, FH);
     flowC.globalCompositeOperation = "source-over";
 
+    /* added to the picture, not laid over it: the light brightens what
+       is already in the arch, so the door and the frame beneath stay
+       exactly where they are while the colour climbs through them */
+    tc.globalCompositeOperation = "lighter";
+    tc.globalAlpha = 0.5;
     tc.drawImage(flowCv, x + w * PB.x0, y + h * PB.y0,
                  w * (PB.x1 - PB.x0), h * (PB.y1 - PB.y0));
+    tc.globalAlpha = 1;
+    tc.globalCompositeOperation = "source-over";
   }
 
 
